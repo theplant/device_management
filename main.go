@@ -31,6 +31,7 @@ func main() {
 	customerDeviceIncoming.IndexAttrs("Client", "Device", "WareHouse", "Quantity", "Date")
 	customerDeviceIncoming.EditAttrs(customerDeviceIncoming.IndexAttrs()...)
 	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.IndexAttrs()...)
+
 	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"日常操作"}})
 	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
 	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
@@ -45,15 +46,12 @@ func main() {
 	customerDeviceOutcoming.EditAttrs(customerDeviceOutcoming.IndexAttrs()...)
 	customerDeviceOutcoming.NewAttrs(customerDeviceOutcoming.EditAttrs()...)
 
-	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"日常操作"}})
-
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
 	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
-    
-   
+
 	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
 	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
-	
+
 	var deviceOuts []*db.DeviceOut
 	var inNumbers []string
 	db.DB.Find(&deviceOuts).Pluck("number", &inNumbers)
@@ -64,23 +62,17 @@ func main() {
 	db.DB.Find(&devices).Where("available_amount > ?", 0).Pluck("number", &outNumbers)
 	deviceOut.NewAttrs("-LendedAt")
 	deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
-	
 
-
-
-
-	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"数据维护"}})
-	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
-	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
-
-	deviceConsumable := adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
+	deviceConsumable := adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"日常操作"}})
 	deviceConsumable.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
 	deviceConsumable.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
 	deviceConsumable.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
 	deviceConsumable.EditAttrs("Name", "Code", "Count")
 	deviceConsumable.NewAttrs(deviceConsumable.EditAttrs()...)
 
-	deviceWareHouse := adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"设备管理"}})
+	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
+	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
+	deviceWareHouse := adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"数据维护"}})
 	deviceWareHouse.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
 	deviceWareHouse.Meta(&admin.Meta{Name: "Address", Type: "string", Label: "设备地址"})
 	deviceWareHouse.EditAttrs("Name", "Address")
@@ -89,7 +81,6 @@ func main() {
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)
 	adm.AddResource(i18n.New(I18nBackend), &admin.Config{Menu: []string{"系统设置"}})
-
 
 	adm.MountTo("/admin", http.DefaultServeMux)
 

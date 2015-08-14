@@ -27,7 +27,7 @@ func main() {
 			return db.Preload("Device").Preload("Client")
 		},
 	})
-	customerDeviceIncoming.IndexAttrs("Client", "Device")
+	customerDeviceIncoming.IndexAttrs("Client", "Device", "Quantity", "Date")
 	customerDeviceIncoming.EditAttrs(customerDeviceIncoming.IndexAttrs()...)
 	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.IndexAttrs()...)
 	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"日常操作"}})
@@ -39,7 +39,7 @@ func main() {
 			return db.Preload("Device").Preload("Client")
 		},
 	})
-	customerDeviceOutcoming.IndexAttrs("Client", "Device")
+	customerDeviceOutcoming.IndexAttrs("Client", "Device", "Quantity", "Date")
 	customerDeviceOutcoming.EditAttrs(customerDeviceOutcoming.IndexAttrs()...)
 	customerDeviceOutcoming.NewAttrs(customerDeviceOutcoming.EditAttrs()...)
 

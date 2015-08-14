@@ -11,6 +11,8 @@ import (
 
 var DB gorm.DB
 var AllModels = []interface{}{
+	&DeviceOut{},
+	&DeviceIn{},
 	&ReportItem{},
 	&Device{},
 	&CustomerDeviceIncoming{},

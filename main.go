@@ -49,6 +49,26 @@ func main() {
 
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
 	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
+    
+   
+	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
+	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
+	
+	var deviceOuts []*db.DeviceOut
+	var inNumbers []string
+	db.DB.Find(&deviceOuts).Pluck("number", &inNumbers)
+	deviceIn.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: inNumbers})
+
+	var devices []*db.Device
+	var outNumbers []string
+	db.DB.Find(&devices).Where("available_amount > ?", 0).Pluck("number", &outNumbers)
+	deviceOut.NewAttrs("-LendedAt")
+	deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
+	
+
+
+
+
 	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"数据维护"}})
 	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
@@ -69,6 +89,7 @@ func main() {
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)
 	adm.AddResource(i18n.New(I18nBackend), &admin.Config{Menu: []string{"系统设置"}})
+
 
 	adm.MountTo("/admin", http.DefaultServeMux)
 

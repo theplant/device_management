@@ -9,5 +9,6 @@ type Device struct {
 	Name     string
 	Number   string
 	Total    int
+	AvailableAmount int
 	Category string
 }

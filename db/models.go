@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/qor/qor/validations"
+	"time"
 )
 
 type Device struct {
@@ -16,16 +17,26 @@ type Device struct {
 
 type CustomerDeviceIncoming struct {
 	gorm.Model
-	CustomerName string `sql:"size:255;"`
-	DeviceId     int
-	Device       Device
+	DeviceID    int
+	Device      Device
+	ClientID    int
+	Client      Client
+	Quantity    int
+	Date        time.Time
+	WareHouseID int
+	WareHouse   WareHouse
 }
 
 type CustomerDeviceOutcoming struct {
 	gorm.Model
-	CustomerName string `sql:"size:255;"`
-	DeviceId     int
-	Device       Device
+	DeviceID    int
+	Device      Device
+	ClientID    int
+	Client      Client
+	Quantity    int
+	Date        time.Time
+	WareHouseID int
+	WareHouse   WareHouse
 }
 
 type WareHouse struct {
@@ -53,6 +64,16 @@ type Employee struct {
 	Mobile string
 }
 
+type ReportItem struct {
+	gorm.Model
+	WhoHasThem  string
+	InWareHouse bool
+	CompanyName string
+	DeviceName  string
+	DeviceCode  string
+	Count       int
+}
+
 func (device Device) Validate(db *gorm.DB) {
 	var deviceInDb Device
 	db.Where("number = ?", device.Number).First(&deviceInDb)
@@ -66,11 +87,14 @@ func (device Device) Validate(db *gorm.DB) {
 	}
 }
 
-type ReportItem struct {
-	gorm.Model
-	WhoHasThem  string
-	CompanyName string
-	DeviceName  string
-	DeviceCode  string
-	Count       int
+func (customerDeviceIncoming CustomerDeviceIncoming) Validate(db *gorm.DB) {
+	if customerDeviceIncoming.Quantity > customerDeviceIncoming.Device.Total {
+		db.AddError(validations.NewError(customerDeviceIncoming, "Quantity", "超过库存数量"))
+	}
+}
+
+func (customerDeviceOutcoming CustomerDeviceOutcoming) Validate(db *gorm.DB) {
+	if customerDeviceOutcoming.Quantity > customerDeviceOutcoming.Device.Total {
+		db.AddError(validations.NewError(customerDeviceOutcoming, "Quantity", "超过库存数量"))
+	}
 }

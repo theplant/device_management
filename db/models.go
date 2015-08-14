@@ -38,6 +38,12 @@ type Client struct {
 	Mobile  string
 }
 
+type Employee struct {
+	gorm.Model
+	Name    string
+	Mobile  string
+}
+
 func (device Device) Validate(db *gorm.DB) {
 	var deviceInDb Device
 	db.Where("number = ?", device.Number).First(&deviceInDb)

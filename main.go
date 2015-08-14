@@ -27,7 +27,9 @@ func main() {
 		return
 	}})
 
-	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"Device Management"}})
+	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"人事管理"}})
+
+	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"人事管理"}})
 
 	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
 	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"设备管理"}})

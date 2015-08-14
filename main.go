@@ -21,14 +21,10 @@ func main() {
 
 	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"设备管理"}})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string"})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: func(resource interface{}, context *qor.Context) (results [][]string) {
-		var devices []db.Device
-		context.GetDB().Find(&devices)
-		for _, device := range devices {
-			results = append(results, []string{fmt.Sprint(device.ID), device.Name})
-		}
-		return
-	}})
+	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices})
+	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"设备管理"}})
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string"})
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices})
 
 	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"人事管理"}})
 
@@ -45,4 +41,13 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+func allDevices(resource interface{}, context *qor.Context) (results [][]string) {
+	var devices []db.Device
+	context.GetDB().Find(&devices)
+	for _, device := range devices {
+		results = append(results, []string{fmt.Sprint(device.ID), device.Name})
+	}
+	return
 }

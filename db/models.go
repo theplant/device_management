@@ -19,6 +19,12 @@ type CustomerDeviceIncoming struct {
 	DeviceId     int
 }
 
+type CustomerDeviceOutcoming struct {
+	gorm.Model
+	CustomerName string `sql:"size:255;"`
+	DeviceId     int
+}
+
 type WareHouse struct {
 	gorm.Model
 	Name    string
@@ -40,8 +46,8 @@ type Client struct {
 
 type Employee struct {
 	gorm.Model
-	Name    string
-	Mobile  string
+	Name   string
+	Mobile string
 }
 
 func (device Device) Validate(db *gorm.DB) {

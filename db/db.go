@@ -14,6 +14,7 @@ var AllModels = []interface{}{
 	&ReportItem{},
 	&Device{},
 	&CustomerDeviceIncoming{},
+	&CustomerDeviceOutcoming{},
 	&WareHouse{},
 	&Consumable{},
 	&Client{},

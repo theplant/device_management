@@ -11,7 +11,6 @@ type Device struct {
 	Name     string
 	Number   string `sql:"unique"`
 	Total    int
-	AvailableAmount int
 	Category string
 }
 

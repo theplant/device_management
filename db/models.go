@@ -65,12 +65,13 @@ type Employee struct {
 
 type ReportItem struct {
 	gorm.Model
-	WhoHasThem  string
-	InWareHouse bool
-	CompanyName string
-	DeviceName  string
-	DeviceCode  string
-	Count       int
+	WhoHasThem   string
+	WhoHasThemId int
+	InWareHouse  bool
+	CompanyName  string
+	DeviceName   string
+	DeviceCode   string
+	Count        int
 }
 
 func (device Device) Validate(db *gorm.DB) {

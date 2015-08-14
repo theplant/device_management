@@ -12,6 +12,7 @@ var DB gorm.DB
 var AllModels = []interface{}{
 	&Device{},
 	&CustomerDeviceIncoming{},
+	&WareHouse{},
 }
 
 func init() {

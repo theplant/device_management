@@ -25,6 +25,8 @@ func main() {
 		}
 		return
 	}})
+	
+	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"Device Management"}})
 
 	adm.MountTo("/admin", http.DefaultServeMux)
 

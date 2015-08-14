@@ -17,3 +17,9 @@ type CustomerDeviceIncoming struct {
 	CustomerName string `sql:"size:255;"`
 	DeviceId     int
 }
+
+type WareHouse struct {
+	gorm.Model
+	Name      string
+	Address   string
+}

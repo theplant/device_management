@@ -17,12 +17,14 @@ type CustomerDeviceIncoming struct {
 	gorm.Model
 	CustomerName string `sql:"size:255;"`
 	DeviceId     int
+	Device       Device
 }
 
 type CustomerDeviceOutcoming struct {
 	gorm.Model
 	CustomerName string `sql:"size:255;"`
 	DeviceId     int
+	Device       Device
 }
 
 type WareHouse struct {

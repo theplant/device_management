@@ -20,11 +20,15 @@ func main() {
 	_ = reportItem
 
 	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"设备管理"}})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string"})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices})
+	customerDeviceIncoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string", Label: "客户名"})
+	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices, Label: "设备名", Valuer: formatedDeviceName})
+	customerDeviceIncoming.EditAttrs("CustomerName", "DeviceId")
+	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.EditAttrs()...)
 	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"设备管理"}})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string"})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices})
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string", Label: "客户名"})
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices, Label: "设备名", Valuer: formatedDeviceName})
+	customerDeviceOutcoming.EditAttrs("CustomerName", "DeviceId")
+	customerDeviceOutcoming.NewAttrs(customerDeviceIncoming.EditAttrs()...)
 
 	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"人事管理"}})
 
@@ -50,4 +54,16 @@ func allDevices(resource interface{}, context *qor.Context) (results [][]string)
 		results = append(results, []string{fmt.Sprint(device.ID), device.Name})
 	}
 	return
+}
+
+func formatedDeviceName(resource interface{}, ctx *qor.Context) interface{} {
+	var text string
+	switch model := resource.(type) {
+	case *db.CustomerDeviceIncoming:
+		text = model.Device.Name
+	case *db.CustomerDeviceOutcoming:
+		text = model.Device.Name
+	}
+
+	return text
 }

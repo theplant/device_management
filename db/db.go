@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/qor/qor/validations"
 	"github.com/theplant/device_management/config"
 )
 
@@ -12,7 +13,14 @@ var DB gorm.DB
 var AllModels = []interface{}{
 	&DeviceOut{},
 	&DeviceIn{},
+	&ReportItem{},
 	&Device{},
+	&CustomerDeviceIncoming{},
+	&CustomerDeviceOutcoming{},
+	&WareHouse{},
+	&Consumable{},
+	&Client{},
+	&Employee{},
 }
 
 func init() {
@@ -39,4 +47,5 @@ func init() {
 		}
 	}
 
+	validations.RegisterCallbacks(&DB)
 }

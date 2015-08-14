@@ -62,6 +62,7 @@ type Employee struct {
 type ReportItem struct {
 	gorm.Model
 	WhoHasThem  string
+	InWareHouse bool
 	CompanyName string
 	DeviceName  string
 	DeviceCode  string

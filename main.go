@@ -20,6 +20,12 @@ func main() {
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"Device Management"}})
 	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
 
+	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"Device Management"}})
+	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{Menu: []string{"Device Management"}})
+	deviceIn.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: []string{"1", "2", "3"}})
+	deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: []string{"1", "2", "3"}})
+	deviceOut.ShowAttrs("-LendedAt")
+
 	adm.MountTo("/admin", http.DefaultServeMux)
 
 	log.Println("Starting Server at 9000.")

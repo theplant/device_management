@@ -21,25 +21,27 @@ func main() {
 	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"日常操作"}})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
+	customerDeviceIncoming.Meta(&admin.Meta{Name: "WareHouse", Type: "select_one", Label: "仓库"})
 	customerDeviceIncoming.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Preload("Device").Preload("Client")
 		},
 	})
-	customerDeviceIncoming.IndexAttrs("Client", "Device", "Quantity", "Date")
+	customerDeviceIncoming.IndexAttrs("Client", "Device", "WareHouse", "Quantity", "Date")
 	customerDeviceIncoming.EditAttrs(customerDeviceIncoming.IndexAttrs()...)
 	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.IndexAttrs()...)
 	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"日常操作"}})
 	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
 	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "WareHouse", Type: "select_one", Label: "仓库"})
 	customerDeviceOutcoming.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Preload("Device").Preload("Client")
 		},
 	})
-	customerDeviceOutcoming.IndexAttrs("Client", "Device", "Quantity", "Date")
+	customerDeviceOutcoming.IndexAttrs("Client", "Device", "WareHouse", "Quantity", "Date")
 	customerDeviceOutcoming.EditAttrs(customerDeviceOutcoming.IndexAttrs()...)
 	customerDeviceOutcoming.NewAttrs(customerDeviceOutcoming.EditAttrs()...)
 

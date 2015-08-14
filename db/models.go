@@ -16,22 +16,26 @@ type Device struct {
 
 type CustomerDeviceIncoming struct {
 	gorm.Model
-	DeviceID int
-	Device   Device
-	ClientID int
-	Client   Client
-	Quantity int
-	Date     time.Time
+	DeviceID    int
+	Device      Device
+	ClientID    int
+	Client      Client
+	Quantity    int
+	Date        time.Time
+	WareHouseID int
+	WareHouse   WareHouse
 }
 
 type CustomerDeviceOutcoming struct {
 	gorm.Model
-	DeviceID int
-	Device   Device
-	ClientID int
-	Client   Client
-	Quantity int
-	Date     time.Time
+	DeviceID    int
+	Device      Device
+	ClientID    int
+	Client      Client
+	Quantity    int
+	Date        time.Time
+	WareHouseID int
+	WareHouse   WareHouse
 }
 
 type WareHouse struct {

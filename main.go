@@ -34,8 +34,18 @@ func main() {
 
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"人事管理"}})
 
-	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
-	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"设备管理"}})
+	deviceConsumable := adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
+	deviceConsumable.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
+	deviceConsumable.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
+	deviceConsumable.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
+	deviceConsumable.EditAttrs("Name", "Code", "Count")
+	deviceConsumable.NewAttrs(deviceConsumable.EditAttrs()...)
+
+	deviceWareHouse := adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"设备管理"}})
+	deviceWareHouse.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
+	deviceWareHouse.Meta(&admin.Meta{Name: "Address", Type: "string", Label: "设备地址"})
+	deviceWareHouse.EditAttrs("Name", "Address")
+	deviceWareHouse.NewAttrs(deviceWareHouse.EditAttrs()...)
 
 	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"设备管理"}})
 	adm.MountTo("/admin", http.DefaultServeMux)

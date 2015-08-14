@@ -14,31 +14,28 @@ import (
 func main() {
 	adm := admin.New(&qor.Config{DB: &db.DB})
 	adm.SetAuth(&Auth{})
-	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"设备管理"}})
-	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
 
 	reportItem := adm.AddResource(&db.ReportItem{}, &admin.Config{Menu: []string{"查询"}})
 	_ = reportItem
 
-	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"设备管理"}})
+	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"日常操作"}})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string", Label: "客户名"})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices, Label: "设备名", Valuer: formatedDeviceName})
 	customerDeviceIncoming.EditAttrs("CustomerName", "DeviceId")
 	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.EditAttrs()...)
-	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"设备管理"}})
+	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"日常操作"}})
 	customerDeviceOutcoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string", Label: "客户名"})
 	customerDeviceOutcoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices, Label: "设备名", Valuer: formatedDeviceName})
 	customerDeviceOutcoming.EditAttrs("CustomerName", "DeviceId")
 	customerDeviceOutcoming.NewAttrs(customerDeviceIncoming.EditAttrs()...)
 
-	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"人事管理"}})
+	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"日常操作"}})
 
-	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"人事管理"}})
-
-	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
-	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"设备管理"}})
-
-	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"设备管理"}})
+	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
+	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
+	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"数据维护"}})
+	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
+	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
 
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)

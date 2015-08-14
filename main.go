@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/jinzhu/gorm"
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
 	"github.com/qor/qor/i18n"
@@ -19,15 +19,29 @@ func main() {
 	_ = reportItem
 
 	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"日常操作"}})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string", Label: "客户名"})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices, Label: "设备名", Valuer: formatedDeviceName})
-	customerDeviceIncoming.EditAttrs("CustomerName", "DeviceId")
-	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.EditAttrs()...)
+	customerDeviceIncoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
+	customerDeviceIncoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
+	customerDeviceIncoming.Scope(&admin.Scope{
+		Default: true,
+		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+			return db.Preload("Device").Preload("Client")
+		},
+	})
+	customerDeviceIncoming.IndexAttrs("Client", "Device")
+	customerDeviceIncoming.EditAttrs(customerDeviceIncoming.IndexAttrs()...)
+	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.IndexAttrs()...)
 	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"日常操作"}})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string", Label: "客户名"})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: allDevices, Label: "设备名", Valuer: formatedDeviceName})
-	customerDeviceOutcoming.EditAttrs("CustomerName", "DeviceId")
-	customerDeviceOutcoming.NewAttrs(customerDeviceIncoming.EditAttrs()...)
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
+	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
+	customerDeviceOutcoming.Scope(&admin.Scope{
+		Default: true,
+		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+			return db.Preload("Device").Preload("Client")
+		},
+	})
+	customerDeviceOutcoming.IndexAttrs("Client", "Device")
+	customerDeviceOutcoming.EditAttrs(customerDeviceOutcoming.IndexAttrs()...)
+	customerDeviceOutcoming.NewAttrs(customerDeviceOutcoming.EditAttrs()...)
 
 	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"日常操作"}})
 
@@ -48,27 +62,6 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
-}
-
-func allDevices(resource interface{}, context *qor.Context) (results [][]string) {
-	var devices []db.Device
-	context.GetDB().Find(&devices)
-	for _, device := range devices {
-		results = append(results, []string{fmt.Sprint(device.ID), device.Name})
-	}
-	return
-}
-
-func formatedDeviceName(resource interface{}, ctx *qor.Context) interface{} {
-	var text string
-	switch model := resource.(type) {
-	case *db.CustomerDeviceIncoming:
-		text = model.Device.Name
-	case *db.CustomerDeviceOutcoming:
-		text = model.Device.Name
-	}
-
-	return text
 }
 
 type Auth struct{}

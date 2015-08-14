@@ -15,16 +15,18 @@ type Device struct {
 
 type CustomerDeviceIncoming struct {
 	gorm.Model
-	CustomerName string `sql:"size:255;"`
-	DeviceId     int
-	Device       Device
+	DeviceID int
+	Device   Device
+	ClientID int
+	Client   Client
 }
 
 type CustomerDeviceOutcoming struct {
 	gorm.Model
-	CustomerName string `sql:"size:255;"`
-	DeviceId     int
-	Device       Device
+	DeviceID int
+	Device   Device
+	ClientID int
+	Client   Client
 }
 
 type WareHouse struct {

@@ -29,6 +29,8 @@ func main() {
 	
 	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"Device Management"}})
 
+	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"Device Management"}})
+
 	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
 	adm.MountTo("/admin", http.DefaultServeMux)
 

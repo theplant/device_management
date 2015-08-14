@@ -14,6 +14,7 @@ var AllModels = []interface{}{
 	&CustomerDeviceIncoming{},
 	&WareHouse{},
 	&Consumable{},
+	&Client{},
 }
 
 func init() {

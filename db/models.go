@@ -23,9 +23,16 @@ type WareHouse struct {
 	Name    string
 	Address string
 }
+
 type Consumable struct {
 	gorm.Model
 	Name  string
 	Code  string
 	Count int
+}
+
+type Client struct {
+	gorm.Model
+	Name    string
+	Mobile  string
 }

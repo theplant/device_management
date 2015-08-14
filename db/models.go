@@ -34,8 +34,8 @@ type Consumable struct {
 
 type Client struct {
 	gorm.Model
-	Name    string
-	Mobile  string
+	Name   string
+	Mobile string
 }
 
 type Employee struct {
@@ -55,4 +55,13 @@ func (device Device) Validate(db *gorm.DB) {
 	if device.Name == "" {
 		db.AddError(validations.NewError(device, "Name", "Name could not be blank"))
 	}
+}
+
+type ReportItem struct {
+	gorm.Model
+	WhoHasThem  string
+	CompanyName string
+	DeviceName  string
+	DeviceCode  string
+	Count       int
 }

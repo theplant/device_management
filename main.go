@@ -16,6 +16,9 @@ func main() {
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"设备管理"}})
 	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
 
+	reportItem := adm.AddResource(&db.ReportItem{}, &admin.Config{Menu: []string{"查询"}})
+	_ = reportItem
+
 	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"设备管理"}})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "CustomerName", Type: "string"})
 	customerDeviceIncoming.Meta(&admin.Meta{Name: "DeviceId", Type: "select_one", Collection: func(resource interface{}, context *qor.Context) (results [][]string) {

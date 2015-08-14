@@ -13,6 +13,7 @@ var AllModels = []interface{}{
 	&Device{},
 	&CustomerDeviceIncoming{},
 	&WareHouse{},
+	&Consumable{},
 }
 
 func init() {

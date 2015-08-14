@@ -20,6 +20,12 @@ type CustomerDeviceIncoming struct {
 
 type WareHouse struct {
 	gorm.Model
-	Name      string
-	Address   string
+	Name    string
+	Address string
+}
+type Consumable struct {
+	gorm.Model
+	Name  string
+	Code  string
+	Count int
 }

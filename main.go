@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
 	"github.com/theplant/device_management/db"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -28,6 +29,7 @@ func main() {
 	
 	adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"Device Management"}})
 
+	adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"消耗品管理"}})
 	adm.MountTo("/admin", http.DefaultServeMux)
 
 	log.Println("Starting Server at 9000.")

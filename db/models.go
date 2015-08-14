@@ -11,3 +11,9 @@ type Device struct {
 	Total    int
 	Category string
 }
+
+type CustomerDeviceIncoming struct {
+	gorm.Model
+	CustomerName string `sql:"size:255;"`
+	DeviceId     int
+}

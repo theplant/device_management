@@ -10,7 +10,7 @@ go get -u github.com/theplant/device_management
 Go to the code directory
 
 ```
-cd $GOPATH/github.com/theplant/device_management
+cd $GOPATH/src/github.com/theplant/device_management
 ```
 
 

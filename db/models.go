@@ -66,11 +66,13 @@ type Employee struct {
 type ReportItem struct {
 	gorm.Model
 	WhoHasThem   string
-	WhoHasThemId int
+	WhoHasThemId uint
 	InWareHouse  bool
-	CompanyName  string
+	ClientID     uint
+	ClientName   string
 	DeviceName   string
 	DeviceCode   string
+	DeviceID     uint
 	Count        int
 }
 
@@ -96,5 +98,46 @@ func (customerDeviceIncoming CustomerDeviceIncoming) Validate(db *gorm.DB) {
 func (customerDeviceOutcoming CustomerDeviceOutcoming) Validate(db *gorm.DB) {
 	if customerDeviceOutcoming.Quantity > customerDeviceOutcoming.Device.Total {
 		db.AddError(validations.NewError(customerDeviceOutcoming, "Quantity", "超过库存数量"))
+	}
+}
+
+func (customerDeviceIncoming CustomerDeviceIncoming) AfterCreate(db *gorm.DB) error {
+	createOrUpdateReportItem(customerDeviceIncoming.Device,
+		customerDeviceIncoming.WareHouse.Name,
+		customerDeviceIncoming.WareHouse.ID,
+		true,
+		customerDeviceIncoming.Client,
+		customerDeviceIncoming.Quantity)
+	return nil
+}
+
+func (customerDeviceOutcoming CustomerDeviceOutcoming) AfterCreate(db *gorm.DB) error {
+	createOrUpdateReportItem(customerDeviceOutcoming.Device, "", 0, false, customerDeviceOutcoming.Client, customerDeviceOutcoming.Quantity)
+	return nil
+}
+
+func createOrUpdateReportItem(device Device, whoHasThem string, whoHasThemId uint, inWareHouse bool, client Client, quantity int) {
+	var reportItem ReportItem
+	if DB.Where("device_id = ? AND client_id = ?", device.ID).Find(&reportItem).RecordNotFound() {
+		reportItem := ReportItem{
+			WhoHasThem:   whoHasThem,
+			WhoHasThemId: whoHasThemId,
+			InWareHouse:  inWareHouse,
+			ClientID:     client.ID,
+			ClientName:   client.Name,
+			Count:        quantity,
+			DeviceID:     device.ID,
+			DeviceName:   device.Name,
+			DeviceCode:   device.Number,
+		}
+		if err := DB.Save(&reportItem).Error; err != nil {
+			panic(err)
+		}
+	} else {
+		if quantity > 0 {
+			DB.Model(&reportItem).UpdateColumn("count", gorm.Expr("count + ?", quantity))
+		} else {
+			DB.Model(&reportItem).UpdateColumn("count", gorm.Expr("count - ?", quantity))
+		}
 	}
 }

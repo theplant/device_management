@@ -2,12 +2,13 @@ package db
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/qor/qor/validations"
 )
 
 type Device struct {
 	gorm.Model
 	Name     string
-	Number   string
+	Number   string `sql:"unique"`
 	Total    int
 	Category string
 }
@@ -35,4 +36,17 @@ type Client struct {
 	gorm.Model
 	Name    string
 	Mobile  string
+}
+
+func (device Device) Validate(db *gorm.DB) {
+	var deviceInDb Device
+	db.Where("number = ?", device.Number).First(&deviceInDb)
+
+	if deviceInDb.ID != device.ID {
+		db.AddError(validations.NewError(device, "Number", "Number already taken"))
+	}
+
+	if device.Name == "" {
+		db.AddError(validations.NewError(device, "Name", "Name could not be blank"))
+	}
 }

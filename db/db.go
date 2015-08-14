@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/qor/qor/validations"
 	"github.com/theplant/device_management/config"
 )
 
@@ -41,4 +42,5 @@ func init() {
 		}
 	}
 
+	validations.RegisterCallbacks(&DB)
 }

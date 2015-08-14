@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
 	"github.com/theplant/device_management/db"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -15,6 +16,9 @@ func main() {
 		Name: "Github Repositories", Menu: []string{"Profile"}, PageCount: 100,
 	})
 	pgr.IndexAttrs("Login")
+
+	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"Device Management"}})
+	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
 
 	adm.MountTo("/admin", http.DefaultServeMux)
 

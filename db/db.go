@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/theplant/device_management/config"

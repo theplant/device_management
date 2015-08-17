@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
@@ -12,17 +11,6 @@ import (
 	"net/http"
 )
 
-func warehouseCollection(prop interface{}, c *qor.Context) (r [][]string) {
-	var whs = []*db.Warehouse{}
-	if err := db.DB.Find(&whs).Error; err != nil {
-		panic(err)
-	}
-	for _, wh := range whs {
-		r = append(r, []string{fmt.Sprintf("%d", wh.ID), wh.Name})
-	}
-	return
-}
-
 func main() {
 	adm := admin.New(&qor.Config{DB: &db.DB})
 	adm.SetAuth(&Auth{})
@@ -31,9 +19,9 @@ func main() {
 	_ = reportItem
 
 	cdIn := adm.AddResource(&db.ClientDeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
-	cdIn.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
-	cdIn.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
-	cdIn.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Label: "存入仓库", Collection: warehouseCollection})
+	cdIn.Meta(&admin.Meta{Name: "Client", Type: "select_one"})
+	cdIn.Meta(&admin.Meta{Name: "Device", Type: "select_one"})
+	cdIn.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Collection: db.WarehouseCollection})
 	cdIn.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
@@ -45,9 +33,9 @@ func main() {
 	cdIn.NewAttrs(cdIn.IndexAttrs()...)
 
 	cdOut := adm.AddResource(&db.ClientDeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
-	cdOut.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
-	cdOut.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
-	cdOut.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Label: "取出仓库", Collection: warehouseCollection})
+	cdOut.Meta(&admin.Meta{Name: "Client", Type: "select_one"})
+	cdOut.Meta(&admin.Meta{Name: "Device", Type: "select_one"})
+	cdOut.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Collection: db.WarehouseCollection})
 	cdOut.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
@@ -59,7 +47,7 @@ func main() {
 	cdOut.NewAttrs(cdOut.EditAttrs()...)
 
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
-	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
+	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: db.DeviceCategories})
 
 	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
 	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
@@ -76,16 +64,16 @@ func main() {
 	deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
 
 	consumableIn := adm.AddResource(&db.ConsumableIn{}, &admin.Config{Menu: []string{"日常操作"}})
-	consumableIn.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
-	consumableIn.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
-	consumableIn.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
+	consumableIn.Meta(&admin.Meta{Name: "Name", Type: "string"})
+	consumableIn.Meta(&admin.Meta{Name: "Code", Type: "string"})
+	consumableIn.Meta(&admin.Meta{Name: "Count", Type: "int"})
 	consumableIn.EditAttrs("Name", "Code", "Count")
 	consumableIn.NewAttrs(consumableIn.EditAttrs()...)
 
 	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{Menu: []string{"日常操作"}})
-	consumableOut.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
-	consumableOut.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
-	consumableOut.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
+	consumableOut.Meta(&admin.Meta{Name: "Name", Type: "string"})
+	consumableOut.Meta(&admin.Meta{Name: "Code", Type: "string"})
+	consumableOut.Meta(&admin.Meta{Name: "Count", Type: "int"})
 	consumableOut.EditAttrs("Name", "Code", "Count")
 	consumableOut.NewAttrs(consumableOut.EditAttrs()...)
 
@@ -93,8 +81,8 @@ func main() {
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
 
 	warehouse := adm.AddResource(&db.Warehouse{}, &admin.Config{Menu: []string{"数据维护"}})
-	warehouse.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
-	warehouse.Meta(&admin.Meta{Name: "Address", Type: "string", Label: "设备地址"})
+	warehouse.Meta(&admin.Meta{Name: "Name", Type: "string"})
+	warehouse.Meta(&admin.Meta{Name: "Address", Type: "string"})
 	warehouse.EditAttrs("Name", "Address")
 	warehouse.NewAttrs(warehouse.EditAttrs()...)
 

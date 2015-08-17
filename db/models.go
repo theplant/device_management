@@ -62,7 +62,7 @@ type ClientDeviceIn struct {
 	Client      Client
 	Quantity    int
 	Date        time.Time
-	WareHouseID int
+	WarehouseID int
 	Warehouse   Warehouse
 }
 
@@ -74,7 +74,7 @@ type ClientDeviceOut struct {
 	Client      Client
 	Quantity    int
 	Date        time.Time
-	WareHouseID int
+	WarehouseID int
 	Warehouse   Warehouse
 }
 

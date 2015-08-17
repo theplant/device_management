@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
@@ -11,6 +12,17 @@ import (
 	"net/http"
 )
 
+func warehouseCollection(prop interface{}, c *qor.Context) (r [][]string) {
+	var whs = []*db.Warehouse{}
+	if err := db.DB.Find(&whs).Error; err != nil {
+		panic(err)
+	}
+	for _, wh := range whs {
+		r = append(r, []string{fmt.Sprintf("%d", wh.ID), wh.Name})
+	}
+	return
+}
+
 func main() {
 	adm := admin.New(&qor.Config{DB: &db.DB})
 	adm.SetAuth(&Auth{})
@@ -18,33 +30,33 @@ func main() {
 	reportItem := adm.AddResource(&db.ReportItem{}, &admin.Config{Menu: []string{"查询"}})
 	_ = reportItem
 
-	customerDeviceIncoming := adm.AddResource(&db.CustomerDeviceIncoming{}, &admin.Config{Menu: []string{"日常操作"}})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
-	customerDeviceIncoming.Meta(&admin.Meta{Name: "WareHouse", Type: "select_one", Label: "仓库"})
-	customerDeviceIncoming.Scope(&admin.Scope{
+	cdIn := adm.AddResource(&db.ClientDeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
+	cdIn.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
+	cdIn.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
+	cdIn.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Label: "存入仓库", Collection: warehouseCollection})
+	cdIn.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Preload("Device").Preload("Client")
 		},
 	})
-	customerDeviceIncoming.IndexAttrs("Client", "Device", "WareHouse", "Quantity", "Date")
-	customerDeviceIncoming.EditAttrs(customerDeviceIncoming.IndexAttrs()...)
-	customerDeviceIncoming.NewAttrs(customerDeviceIncoming.IndexAttrs()...)
+	cdIn.IndexAttrs("Client", "Device", "Warehouse", "Quantity", "Date")
+	cdIn.EditAttrs(cdIn.IndexAttrs()...)
+	cdIn.NewAttrs(cdIn.IndexAttrs()...)
 
-	customerDeviceOutcoming := adm.AddResource(&db.CustomerDeviceOutcoming{}, &admin.Config{Menu: []string{"日常操作"}})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
-	customerDeviceOutcoming.Meta(&admin.Meta{Name: "WareHouse", Type: "select_one", Label: "仓库"})
-	customerDeviceOutcoming.Scope(&admin.Scope{
+	cdOut := adm.AddResource(&db.ClientDeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
+	cdOut.Meta(&admin.Meta{Name: "Client", Type: "select_one", Label: "客户名"})
+	cdOut.Meta(&admin.Meta{Name: "Device", Type: "select_one", Label: "设备名"})
+	cdOut.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Label: "取出仓库", Collection: warehouseCollection})
+	cdOut.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Preload("Device").Preload("Client")
 		},
 	})
-	customerDeviceOutcoming.IndexAttrs("Client", "Device", "WareHouse", "Quantity", "Date")
-	customerDeviceOutcoming.EditAttrs(customerDeviceOutcoming.IndexAttrs()...)
-	customerDeviceOutcoming.NewAttrs(customerDeviceOutcoming.EditAttrs()...)
+	cdOut.IndexAttrs("Client", "Device", "Warehouse", "Quantity", "Date")
+	cdOut.EditAttrs(cdOut.IndexAttrs()...)
+	cdOut.NewAttrs(cdOut.EditAttrs()...)
 
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
 	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: []string{"自有设备", "消耗品", "客户设备"}})
@@ -63,20 +75,28 @@ func main() {
 	deviceOut.NewAttrs("-LendedAt")
 	deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
 
-	deviceConsumable := adm.AddResource(&db.Consumable{}, &admin.Config{Menu: []string{"日常操作"}})
-	deviceConsumable.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
-	deviceConsumable.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
-	deviceConsumable.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
-	deviceConsumable.EditAttrs("Name", "Code", "Count")
-	deviceConsumable.NewAttrs(deviceConsumable.EditAttrs()...)
+	consumableIn := adm.AddResource(&db.ConsumableIn{}, &admin.Config{Menu: []string{"日常操作"}})
+	consumableIn.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
+	consumableIn.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
+	consumableIn.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
+	consumableIn.EditAttrs("Name", "Code", "Count")
+	consumableIn.NewAttrs(consumableIn.EditAttrs()...)
+
+	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{Menu: []string{"日常操作"}})
+	consumableOut.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
+	consumableOut.Meta(&admin.Meta{Name: "Code", Type: "string", Label: "设备代码"})
+	consumableOut.Meta(&admin.Meta{Name: "Count", Type: "int", Label: "设备数量"})
+	consumableOut.EditAttrs("Name", "Code", "Count")
+	consumableOut.NewAttrs(consumableOut.EditAttrs()...)
 
 	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
-	deviceWareHouse := adm.AddResource(&db.WareHouse{}, &admin.Config{Menu: []string{"数据维护"}})
-	deviceWareHouse.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
-	deviceWareHouse.Meta(&admin.Meta{Name: "Address", Type: "string", Label: "设备地址"})
-	deviceWareHouse.EditAttrs("Name", "Address")
-	deviceWareHouse.NewAttrs(deviceWareHouse.EditAttrs()...)
+
+	warehouse := adm.AddResource(&db.Warehouse{}, &admin.Config{Menu: []string{"数据维护"}})
+	warehouse.Meta(&admin.Meta{Name: "Name", Type: "string", Label: "设备名"})
+	warehouse.Meta(&admin.Meta{Name: "Address", Type: "string", Label: "设备地址"})
+	warehouse.EditAttrs("Name", "Address")
+	warehouse.NewAttrs(warehouse.EditAttrs()...)
 
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)

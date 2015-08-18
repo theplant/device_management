@@ -1,74 +1,93 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
+	// "github.com/jinzhu/gorm"
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
 	"github.com/qor/qor/i18n"
 	"github.com/qor/qor/i18n/backends/database"
+	"github.com/qor/qor/roles"
 	"github.com/theplant/device_management/db"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
+	roles.Register("admin", func(req *http.Request, cu qor.CurrentUser) bool {
+		return true
+	})
+
 	adm := admin.New(&qor.Config{DB: &db.DB})
+
 	adm.SetAuth(&Auth{})
 
-	reportItem := adm.AddResource(&db.ReportItem{}, &admin.Config{Menu: []string{"查询"}})
-	_ = reportItem
+	noUpdatePermission := roles.Deny(roles.Update, "admin")
 
-	cdIn := adm.AddResource(&db.ClientDeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
-	cdIn.Meta(&admin.Meta{Name: "Client", Type: "select_one"})
-	cdIn.Meta(&admin.Meta{Name: "Device", Type: "select_one"})
+	reportItem := adm.AddResource(&db.ReportItem{}, &admin.Config{Menu: []string{"查询"},
+		Permission: roles.Deny(roles.Update, "admin").Deny(roles.Delete, "admin").Deny(roles.Create, "admin"),
+	})
+	reportItem.IndexAttrs("WhoHasThem", "ClientName", "DeviceName", "DeviceCode", "Count")
+
+	cdIn := adm.AddResource(&db.ClientDeviceIn{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
+
 	cdIn.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Collection: db.WarehouseCollection})
-	cdIn.Scope(&admin.Scope{
-		Default: true,
-		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
-			return db.Preload("Device").Preload("Client")
-		},
-	})
-	cdIn.IndexAttrs("Client", "Device", "Warehouse", "Quantity", "Date")
-	cdIn.EditAttrs(cdIn.IndexAttrs()...)
+	cdIn.Meta(&admin.Meta{Name: "ByWhom", Type: "select_one", Collection: db.EmployeeCollection})
+	// cdIn.Scope(&admin.Scope{
+	// 	Default: true,
+	// 	Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+	// 		return db.Preload("Device").Preload("Client")
+	// 	},
+	// })
+	cdIn.IndexAttrs("ClientName", "DeviceName", "Warehouse", "Quantity", "ByWhom", "Date")
 	cdIn.NewAttrs(cdIn.IndexAttrs()...)
+	cdIn.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.ClientDeviceIn).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
 
-	cdOut := adm.AddResource(&db.ClientDeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
-	cdOut.Meta(&admin.Meta{Name: "Client", Type: "select_one"})
-	cdOut.Meta(&admin.Meta{Name: "Device", Type: "select_one"})
-	cdOut.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Collection: db.WarehouseCollection})
-	cdOut.Scope(&admin.Scope{
-		Default: true,
-		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
-			return db.Preload("Device").Preload("Client")
-		},
+	cdOut := adm.AddResource(&db.ClientDeviceOut{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
 	})
-	cdOut.IndexAttrs("Client", "Device", "Warehouse", "Quantity", "Date")
-	cdOut.EditAttrs(cdOut.IndexAttrs()...)
-	cdOut.NewAttrs(cdOut.EditAttrs()...)
+
+	cdOut.Meta(&admin.Meta{Name: "ClientDeviceInID", Type: "select_one", Collection: db.CurrentClientDeviceIns})
+	cdOut.Meta(&admin.Meta{Name: "ByWhom", Type: "select_one", Collection: db.EmployeeCollection})
+	cdOut.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.ClientDeviceOut).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
+
+	// cdOut.Scope(&admin.Scope{
+	// 	Default: true,
+	// 	Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+	// 		return db.Preload("Device").Preload("Client")
+	// 	},
+	// })
+	cdOut.IndexAttrs("ClientName", "DeviceName", "Quantity", "WarehouseName", "ByWhom", "Date")
+	cdOut.NewAttrs("ClientDeviceInID", "ByWhom", "Date")
 
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
 	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: db.DeviceCategories})
 
-	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
 	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
+	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
 
-	var deviceOuts []*db.DeviceOut
-	var inNumbers []string
-	db.DB.Find(&deviceOuts).Pluck("number", &inNumbers)
-	deviceIn.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: inNumbers})
+	_ = deviceIn
+	// deviceIn.Meta(&admin.Meta{Name: "Code", Type: "select_one", Collection: inNumbers})
 
-	var devices []*db.Device
-	var outNumbers []string
-	db.DB.Find(&devices).Where("available_amount > ?", 0).Pluck("number", &outNumbers)
 	deviceOut.NewAttrs("-LendedAt")
-	deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
-
-	consumableIn := adm.AddResource(&db.ConsumableIn{}, &admin.Config{Menu: []string{"日常操作"}})
-	consumableIn.Meta(&admin.Meta{Name: "Name", Type: "string"})
-	consumableIn.Meta(&admin.Meta{Name: "Code", Type: "string"})
-	consumableIn.Meta(&admin.Meta{Name: "Count", Type: "int"})
-	consumableIn.EditAttrs("Name", "Code", "Count")
-	consumableIn.NewAttrs(consumableIn.EditAttrs()...)
+	_ = deviceOut
+	// deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
 
 	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{Menu: []string{"日常操作"}})
 	consumableOut.Meta(&admin.Meta{Name: "Name", Type: "string"})
@@ -76,6 +95,13 @@ func main() {
 	consumableOut.Meta(&admin.Meta{Name: "Count", Type: "int"})
 	consumableOut.EditAttrs("Name", "Code", "Count")
 	consumableOut.NewAttrs(consumableOut.EditAttrs()...)
+
+	consumableIn := adm.AddResource(&db.ConsumableIn{}, &admin.Config{Menu: []string{"日常操作"}})
+	consumableIn.Meta(&admin.Meta{Name: "Name", Type: "string"})
+	consumableIn.Meta(&admin.Meta{Name: "Code", Type: "string"})
+	consumableIn.Meta(&admin.Meta{Name: "Count", Type: "int"})
+	consumableIn.EditAttrs("Name", "Code", "Count")
+	consumableIn.NewAttrs(consumableIn.EditAttrs()...)
 
 	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})

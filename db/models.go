@@ -9,7 +9,7 @@ import (
 type Device struct {
 	gorm.Model
 	Name     string
-	Number   string `sql:"unique"`
+	Code     string `sql:"unique"`
 	Total    int
 	Category string
 }
@@ -35,8 +35,8 @@ type Employee struct {
 // operations data
 type DeviceIn struct {
 	gorm.Model
-	Number      string
-	Amount      int
+	Code        string
+	Amount      uint
 	ReceivedBy  string
 	ReturnedBy  string
 	ReceivedAt  time.Time
@@ -45,9 +45,9 @@ type DeviceIn struct {
 
 type DeviceOut struct {
 	gorm.Model
-	Number        string
-	FromWareHouse int
-	Amount        int
+	Code          string
+	FromWareHouse uint
+	Amount        uint
 	LendedBy      string
 	BorrowedBy    string
 	LendedAt      time.Time
@@ -56,26 +56,26 @@ type DeviceOut struct {
 
 type ClientDeviceIn struct {
 	gorm.Model
-	DeviceID    int
-	Device      Device
-	ClientID    int
-	Client      Client
+	DeviceName  string
+	ClientName  string
 	Quantity    int
 	Date        time.Time
-	WarehouseID int
+	WarehouseID uint
 	Warehouse   Warehouse
+	ByWhomID    uint
+	ByWhom      Employee
 }
 
 type ClientDeviceOut struct {
 	gorm.Model
-	DeviceID    int
-	Device      Device
-	ClientID    int
-	Client      Client
-	Quantity    int
-	Date        time.Time
-	WarehouseID int
-	Warehouse   Warehouse
+	ClientDeviceInID uint
+	DeviceName       string
+	ClientName       string
+	Quantity         int
+	WarehouseName    string
+	Date             time.Time
+	ByWhomID         uint
+	ByWhom           Employee
 }
 
 type ConsumableIn struct {
@@ -95,13 +95,16 @@ type ConsumableOut struct {
 // report data
 type ReportItem struct {
 	gorm.Model
-	WhoHasThem   string
-	WhoHasThemId uint
-	InWareHouse  bool
-	ClientID     uint
-	ClientName   string
-	DeviceName   string
-	DeviceCode   string
-	DeviceID     uint
-	Count        int
+	WhoHasThem       string
+	WhoHasThemId     uint
+	WhoHasThemType   string
+	ClientID         uint
+	ClientName       string
+	DeviceID         uint
+	DeviceName       string
+	DeviceCode       string
+	OperatedByWhomId uint
+	OperatedByWhom   string
+	Count            uint
+	ClientDeviceInID uint
 }

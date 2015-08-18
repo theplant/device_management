@@ -18,6 +18,8 @@ var (
 )
 
 func init() {
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+
 	Env = envOrPanic("PROFILE_ENV", false)
 	WebDir = envOrPanic("PROFILE_WEBDIR", false)
 

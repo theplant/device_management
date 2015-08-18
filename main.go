@@ -27,7 +27,7 @@ func main() {
 	reportItem := adm.AddResource(&db.ReportItem{}, &admin.Config{Menu: []string{"查询"},
 		Permission: roles.Deny(roles.Update, "admin").Deny(roles.Delete, "admin").Deny(roles.Create, "admin"),
 	})
-	reportItem.IndexAttrs("WhoHasThem", "ClientName", "DeviceName", "DeviceCode", "Count")
+	reportItem.IndexAttrs("WhoHasThemName", "ClientName", "DeviceName", "DeviceCode", "Count")
 
 	cdIn := adm.AddResource(&db.ClientDeviceIn{}, &admin.Config{
 		Menu:       []string{"日常操作"},
@@ -77,16 +77,27 @@ func main() {
 	cdOut.NewAttrs("ClientDeviceInID", "ByWhom", "Date")
 
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
-	device.Meta(&admin.Meta{Name: "Category", Type: "select_one", Collection: db.DeviceCategories})
+	device.Meta(&admin.Meta{Name: "CategoryID", Type: "select_one", Collection: db.DeviceCategories})
+	device.Meta(&admin.Meta{Name: "WarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
+	// _ = device
 
-	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{Menu: []string{"日常操作"}})
-	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{Menu: []string{"日常操作"}})
+	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
+
+	deviceOut.IndexAttrs("Device", "ToWhom", "Quantity", "Warehouse", "ByWhom", "Date")
+	deviceOut.NewAttrs("DeviceID", "ToWhomID", "Quantity", "WarehouseID", "ByWhomID", "Date")
+	deviceOut.Meta(&admin.Meta{Name: "DeviceID", Type: "select_one", Collection: db.CurrentDeviceCollection})
+
+	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
 
 	_ = deviceIn
 	// deviceIn.Meta(&admin.Meta{Name: "Code", Type: "select_one", Collection: inNumbers})
 
-	deviceOut.NewAttrs("-LendedAt")
-	_ = deviceOut
 	// deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
 
 	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{Menu: []string{"日常操作"}})

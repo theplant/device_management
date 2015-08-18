@@ -8,22 +8,17 @@ import (
 // master data
 type Device struct {
 	gorm.Model
-	Name     string
-	Code     string `sql:"unique"`
-	Total    int
-	Category string
+	Name          string
+	Code          string `sql:"unique"`
+	TotalQuantity uint
+	WarehouseID   uint
+	CategoryID    uint
 }
 
 type Warehouse struct {
 	gorm.Model
 	Name    string
 	Address string
-}
-
-type Client struct {
-	gorm.Model
-	Name   string
-	Mobile string
 }
 
 type Employee struct {
@@ -35,23 +30,29 @@ type Employee struct {
 // operations data
 type DeviceIn struct {
 	gorm.Model
-	Code        string
-	Amount      uint
-	ReceivedBy  string
-	ReturnedBy  string
-	ReceivedAt  time.Time
-	WareHouseId int
+	DeviceOutID  uint
+	DeviceName   string
+	FromWhomName string
+	Quantity     int
+	WarehouseID  uint
+	Warehouse    Warehouse
+	Date         time.Time
+	ByWhomID     uint
+	ByWhom       Employee
 }
 
 type DeviceOut struct {
 	gorm.Model
-	Code          string
-	FromWareHouse uint
-	Amount        uint
-	LendedBy      string
-	BorrowedBy    string
-	LendedAt      time.Time
-	ExperiedAt    time.Time
+	DeviceID    uint
+	Device      Device
+	Quantity    uint
+	ToWhomID    uint
+	ToWhom      Employee
+	WarehouseID uint
+	Warehouse   Warehouse
+	ByWhomID    uint
+	ByWhom      Employee
+	Date        time.Time
 }
 
 type ClientDeviceIn struct {
@@ -95,16 +96,15 @@ type ConsumableOut struct {
 // report data
 type ReportItem struct {
 	gorm.Model
-	WhoHasThem       string
-	WhoHasThemId     uint
-	WhoHasThemType   string
-	ClientID         uint
-	ClientName       string
-	DeviceID         uint
-	DeviceName       string
-	DeviceCode       string
-	OperatedByWhomId uint
-	OperatedByWhom   string
-	Count            uint
-	ClientDeviceInID uint
+	WhoHasThemName     string
+	WhoHasThemID       uint
+	WhoHasThemType     string
+	ClientName         string
+	DeviceID           uint
+	DeviceName         string
+	DeviceCode         string
+	OperatedByWhomID   uint
+	OperatedByWhomName string
+	Count              uint
+	ClientDeviceInID   uint
 }

@@ -103,7 +103,6 @@ func main() {
 	consumableIn.EditAttrs("Name", "Code", "Count")
 	consumableIn.NewAttrs(consumableIn.EditAttrs()...)
 
-	adm.AddResource(&db.Client{}, &admin.Config{Menu: []string{"数据维护"}})
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
 
 	warehouse := adm.AddResource(&db.Warehouse{}, &admin.Config{Menu: []string{"数据维护"}})

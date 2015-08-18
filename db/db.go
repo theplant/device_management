@@ -20,7 +20,6 @@ var AllModels = []interface{}{
 	&Warehouse{},
 	&ConsumableIn{},
 	&ConsumableOut{},
-	&Client{},
 	&Employee{},
 }
 

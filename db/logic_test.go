@@ -81,6 +81,41 @@ func TestClientDeviceIn(t *testing.T) {
 
 }
 
+func TestDeviceUpdateTotalCount(t *testing.T) {
+	gorm.Delete(DB.Unscoped().NewScope(&DeviceOut{}))
+	gorm.Delete(DB.Unscoped().NewScope(&Device{}))
+	gorm.Delete(DB.Unscoped().NewScope(&ReportItem{})) // call without callbacks
+	felix, wensanlu := employeeAndWarehouse()
+	iphone := deviceiPhone(wensanlu.ID)
+	from, _ := getOrCreateReportItem(wensanlu, &iphone, 0)
+
+	dOut := DeviceOut{
+		FromReportItemID: from.ID,
+		ToWhomID:         felix.ID,
+		Quantity:         10,
+		Date:             time.Now(),
+		ByWhomID:         felix.ID,
+	}
+
+	DB.Create(&dOut)
+
+	iphone.TotalQuantity = 9
+	err := DB.Save(iphone).Error
+	if err == nil {
+		t.Error("should have error")
+	}
+
+	iphone.TotalQuantity = 10
+	err = DB.Save(iphone).Error
+	if err != nil {
+		t.Error(err)
+	}
+	ri, _ := getOrCreateReportItem(wensanlu, &iphone, 0)
+	if ri.Count != 0 {
+		t.Error("update total quantity didn't change report item")
+	}
+}
+
 func TestDeviceOutAndIn(t *testing.T) {
 	gorm.Delete(DB.Unscoped().NewScope(&DeviceIn{}))
 	gorm.Delete(DB.Unscoped().NewScope(&DeviceOut{}))

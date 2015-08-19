@@ -173,6 +173,42 @@ func (d Device) AfterCreate(db *gorm.DB) (err error) {
 	return
 }
 
+func (d Device) BeforeUpdate(db *gorm.DB) (err error) {
+
+	warehouse := Warehouse{}
+	err = DB.Find(&warehouse, d.WarehouseID).Error
+	if err != nil {
+		return
+	}
+
+	var ri *ReportItem
+	ri, err = getOrCreateReportItem(warehouse, &d, d.TotalQuantity)
+	if err != nil {
+		return
+	}
+
+	var oldDev Device
+	err = DB.Find(&oldDev, d.ID).Error
+	if err != nil {
+		return
+	}
+
+	inc := d.TotalQuantity - oldDev.TotalQuantity
+
+	if ri.Count+int(inc) < 0 {
+		err = errors.New(fmt.Sprintf("更新后的库存数量不能小于零，在库%d", ri.Count))
+		return
+	}
+
+	err = DB.Model(&ReportItem{}).Where(&ReportItem{ID: ri.ID}).UpdateColumns(&ReportItem{Count: ri.Count + int(inc)}).Error
+	if err != nil {
+		return
+	}
+
+	err = DB.Model(&ReportItem{}).Where(&ReportItem{DeviceID: d.ID}).UpdateColumns(&ReportItem{DeviceCode: d.Code, DeviceName: d.Name}).Error
+	return
+}
+
 func (d Device) BeforeDelete(db *gorm.DB) (err error) {
 
 	warehouse := Warehouse{}

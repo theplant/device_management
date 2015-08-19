@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
@@ -8,6 +9,7 @@ import (
 	"github.com/qor/qor/i18n/backends/database"
 	"github.com/qor/qor/roles"
 	"github.com/theplant/device_management/db"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -32,6 +34,18 @@ func main() {
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Where("count > 0").Order("updated_at DESC")
+		},
+	})
+
+	reportItem.Meta(&admin.Meta{
+		Name: "WhoHasThemName",
+		Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+			ri := resource.(*db.ReportItem)
+			name := ri.WhoHasThemName
+			if ri.WhoHasThemType == "Employee" {
+				name = fmt.Sprintf(`<strong style="color:red">%s</string>`, name)
+			}
+			return template.HTML(name)
 		},
 	})
 
@@ -81,11 +95,6 @@ func main() {
 	// })
 	cdOut.IndexAttrs("ClientName", "DeviceName", "Quantity", "WarehouseName", "ByWhom", "Date")
 	cdOut.NewAttrs("ClientDeviceInID", "ByWhom", "Date")
-
-	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
-	device.Meta(&admin.Meta{Name: "CategoryID", Type: "select_one", Collection: db.DeviceCategories})
-	device.Meta(&admin.Meta{Name: "WarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
-	// _ = device
 
 	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{
 		Menu:       []string{"日常操作"},
@@ -155,6 +164,13 @@ func main() {
 		}
 		return date
 	}})
+
+	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
+	device.Meta(&admin.Meta{Name: "CategoryID", Type: "select_one", Collection: db.DeviceCategories})
+	device.Meta(&admin.Meta{Name: "WarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
+	device.EditAttrs("Name", "Code", "TotalQuantity")
+
+	// _ = device
 
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
 

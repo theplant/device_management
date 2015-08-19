@@ -107,7 +107,10 @@ type ConsumableOut struct {
 
 // report data
 type ReportItem struct {
-	gorm.Model
+	ID                 uint `gorm:"primary_key"`
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	DeletedAt          *time.Time
 	WhoHasThemName     string
 	WhoHasThemID       uint
 	WhoHasThemType     string

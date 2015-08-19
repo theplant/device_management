@@ -24,7 +24,7 @@ func WarehouseCollection(prop interface{}, c *qor.Context) (r [][]string) {
 
 func CurrentWarehouseDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
-	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND client_device_in_id = 0").Find(&whs).Error; err != nil {
+	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND device_category_id = 1 AND client_device_in_id = 0").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {

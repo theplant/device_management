@@ -54,6 +54,26 @@ func (dIn DeviceIn) BeforeDelete(db *gorm.DB) (err error) {
 	return
 }
 
+func (cIn ConsumableIn) AfterCreate(db *gorm.DB) (err error) {
+	err = moveDeviceByID(cIn.ReportItemID, 0, "Warehouse", -1*cIn.Quantity)
+	return
+}
+
+func (cIn ConsumableIn) BeforeDelete(db *gorm.DB) (err error) {
+	err = moveDeviceByID(cIn.ReportItemID, 0, "Warehouse", cIn.Quantity)
+	return
+}
+
+func (cOut ConsumableOut) AfterCreate(db *gorm.DB) (err error) {
+	err = moveDeviceByID(cOut.ReportItemID, 0, "Warehouse", cOut.Quantity)
+	return
+}
+
+func (cOut ConsumableOut) BeforeDelete(db *gorm.DB) (err error) {
+	err = moveDeviceByID(cOut.ReportItemID, 0, "Warehouse", -1*cOut.Quantity)
+	return
+}
+
 func moveDeviceByID(fromReportItemID uint, toHolderId uint, toHolderType string, quantity int) (err error) {
 	var d Device
 	var from, to DeviceHolder
@@ -70,11 +90,13 @@ func fromToDevice(fromReportItemID uint, toHolderId uint, toHolderType string) (
 		return
 	}
 
-	to, err = holderByIDType(toHolderId, toHolderType)
+	if toHolderId > 0 {
+		to, err = holderByIDType(toHolderId, toHolderType)
 
-	if err != nil {
-		log.Println(err)
-		return
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 	return
 }
@@ -87,18 +109,20 @@ func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity int
 		return
 	}
 
-	toRi, err = getOrCreateReportItem(to, device, 0)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
 	max := 0
 	if fromRi.Count-quantity < 0 {
 		max = fromRi.Count
 	}
-	if toRi.Count+quantity < 0 {
-		max = toRi.Count
+
+	if to != nil {
+		toRi, err = getOrCreateReportItem(to, device, 0)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if toRi.Count+quantity < 0 {
+			max = toRi.Count
+		}
 	}
 
 	if max > 0 {
@@ -112,11 +136,14 @@ func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity int
 		return
 	}
 
-	err = DB.Model(&toRi).Where("id = ?", toRi.ID).UpdateColumn("count", gorm.Expr("count + ?", quantity)).Error
-	if err != nil {
-		log.Println(err)
-		return
+	if to != nil {
+		err = DB.Model(&toRi).Where("id = ?", toRi.ID).UpdateColumn("count", gorm.Expr("count + ?", quantity)).Error
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
+
 	return
 }
 
@@ -200,13 +227,14 @@ func getOrCreateReportItem(holder DeviceHolder, device *Device, count uint) (r *
 	}
 
 	reportItem = ReportItem{
-		WhoHasThemName: holder.HolderName(),
-		WhoHasThemID:   holder.HolderID(),
-		WhoHasThemType: holder.HolderType(),
-		DeviceID:       device.ID,
-		DeviceCode:     device.Code,
-		DeviceName:     device.Name,
-		Count:          int(count),
+		WhoHasThemName:   holder.HolderName(),
+		WhoHasThemID:     holder.HolderID(),
+		WhoHasThemType:   holder.HolderType(),
+		DeviceID:         device.ID,
+		DeviceCode:       device.Code,
+		DeviceName:       device.Name,
+		DeviceCategoryID: device.CategoryID,
+		Count:            int(count),
 	}
 
 	err = DB.Create(&reportItem).Error

@@ -31,7 +31,7 @@ func main() {
 	reportItem.Scope(&admin.Scope{
 		Default: true,
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
-			return db.Where("count > 0")
+			return db.Where("count > 0").Order("updated_at DESC")
 		},
 	})
 
@@ -122,19 +122,39 @@ func main() {
 		return date
 	}})
 
-	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{Menu: []string{"日常操作"}})
-	consumableOut.Meta(&admin.Meta{Name: "Name", Type: "string"})
-	consumableOut.Meta(&admin.Meta{Name: "Code", Type: "string"})
-	consumableOut.Meta(&admin.Meta{Name: "Count", Type: "int"})
-	consumableOut.EditAttrs("Name", "Code", "Count")
-	consumableOut.NewAttrs(consumableOut.EditAttrs()...)
+	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
+	consumableOut.IndexAttrs("DeviceName", "Quantity", "ToWhomName", "WarehouseName", "ByWhomName", "Date")
+	consumableOut.NewAttrs("ReportItemID", "Quantity", "ToWhomID", "ByWhomID", "Date")
+	consumableOut.Meta(&admin.Meta{Name: "ReportItemID", Type: "select_one", Collection: db.CurrentConsumableCollection})
+	consumableOut.Meta(&admin.Meta{Name: "ToWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	consumableOut.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	consumableOut.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.ConsumableOut).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
 
-	consumableIn := adm.AddResource(&db.ConsumableIn{}, &admin.Config{Menu: []string{"日常操作"}})
-	consumableIn.Meta(&admin.Meta{Name: "Name", Type: "string"})
-	consumableIn.Meta(&admin.Meta{Name: "Code", Type: "string"})
-	consumableIn.Meta(&admin.Meta{Name: "Count", Type: "int"})
-	consumableIn.EditAttrs("Name", "Code", "Count")
-	consumableIn.NewAttrs(consumableIn.EditAttrs()...)
+	consumableIn := adm.AddResource(&db.ConsumableIn{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
+
+	consumableIn.IndexAttrs("DeviceName", "Quantity", "WarehouseName", "ByWhomName", "Date")
+	consumableIn.NewAttrs("ReportItemID", "Quantity", "ToWhomID", "ByWhomID", "Date")
+	consumableIn.Meta(&admin.Meta{Name: "ReportItemID", Type: "select_one", Collection: db.CurrentConsumableCollection})
+	consumableIn.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	consumableIn.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.ConsumableIn).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
 
 	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
 

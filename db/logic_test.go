@@ -17,6 +17,11 @@ func deviceiPhone(warehouseID uint) (iPhone Device) {
 	return
 }
 
+func deviceInk(warehouseID uint) (ink Device) {
+	DB.Where(&Device{Name: "墨水", Code: "INK", TotalQuantity: 20, WarehouseID: warehouseID, CategoryID: 2}).Assign(&Device{}).FirstOrCreate(&ink)
+	return
+}
+
 func TestClientDeviceIn(t *testing.T) {
 	DB.Unscoped().Delete(&ClientDeviceIn{})
 	DB.Unscoped().Delete(&ClientDeviceOut{})
@@ -128,6 +133,11 @@ func TestDeviceOutAndIn(t *testing.T) {
 		ByWhomID:         felix.ID,
 	}
 	DB.Create(dIn)
+
+	if dIn.ToWarehouseName != wensanlu.Name {
+		t.Error("ToWarehouseName not updated correctly")
+	}
+
 	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
 
 	if ri.Count != 2 {
@@ -138,5 +148,69 @@ func TestDeviceOutAndIn(t *testing.T) {
 	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
 	if ri.Count != 5 {
 		t.Error("report item count updated wrong, should be 5 again")
+	}
+}
+
+func TestConsumableInAndOut(t *testing.T) {
+	gorm.Delete(DB.Unscoped().NewScope(&ConsumableIn{}))
+	gorm.Delete(DB.Unscoped().NewScope(&ConsumableOut{}))
+	gorm.Delete(DB.Unscoped().NewScope(&Device{}))
+	gorm.Delete(DB.Unscoped().NewScope(&ReportItem{})) // call without callbacks
+
+	felix, wensanlu := employeeAndWarehouse()
+	ink := deviceInk(wensanlu.ID)
+	from, _ := getOrCreateReportItem(wensanlu, &ink, 0)
+
+	cOut := ConsumableOut{
+		ReportItemID: from.ID,
+		ToWhomID:     felix.ID,
+		Quantity:     5,
+		Date:         time.Now(),
+		ByWhomID:     felix.ID,
+	}
+
+	DB.Create(&cOut)
+
+	var ri *ReportItem
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+
+	if ri.ID == 0 {
+		t.Error("report item not created")
+	}
+
+	cOut2 := cOut
+	cOut2.ID = 0
+	DB.Create(&cOut2)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+
+	if ri.Count != 10 {
+		t.Error("report item count updated wrong, should be 10")
+	}
+
+	DB.Delete(&cOut2)
+
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	if ri.Count != 15 {
+		t.Error("report item count updated wrong, should be 15")
+	}
+
+	inFrom, _ := getOrCreateReportItem(wensanlu, &ink, 0)
+	cIn := &ConsumableIn{
+		ReportItemID: inFrom.ID,
+		Quantity:     3,
+		Date:         time.Now(),
+		ByWhomID:     felix.ID,
+	}
+	DB.Create(cIn)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+
+	if ri.Count != 18 {
+		t.Error("report item count updated wrong, should be 18")
+	}
+
+	DB.Delete(&cIn)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	if ri.Count != 15 {
+		t.Error("report item count updated wrong, should be 15 again")
 	}
 }

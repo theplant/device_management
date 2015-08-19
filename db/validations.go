@@ -80,7 +80,7 @@ func (dIn *DeviceIn) Validate(db *gorm.DB) {
 		db.AddError(validations.NewError(dIn, "ByWhomID", "请选择操作员"))
 	}
 
-	from, to, d, err := fromToDevice(dIn.FromReportItemID, dIn.ToWarehouseID, "Employee")
+	from, to, d, err := fromToDevice(dIn.FromReportItemID, dIn.ToWarehouseID, "Warehouse")
 	if err != nil {
 		db.AddError(validations.NewError(dIn, "FromReportItemID", err.Error()))
 		return
@@ -92,6 +92,59 @@ func (dIn *DeviceIn) Validate(db *gorm.DB) {
 
 	byWhom, _ := holderByIDType(dIn.ByWhomID, "Employee")
 	dIn.ByWhomName = byWhom.HolderName()
+
+}
+
+func (cOut *ConsumableOut) Validate(db *gorm.DB) {
+	if cOut.ReportItemID == 0 {
+		db.AddError(validations.NewError(cOut, "ReportItemID", "消耗品不能为空"))
+	}
+	if cOut.ToWhomID == 0 {
+		db.AddError(validations.NewError(cOut, "ToWhomID", "消耗品使用人不能为空"))
+	}
+	if cOut.Quantity <= 0 {
+		db.AddError(validations.NewError(cOut, "Quantity", "带出消耗品的数量要大于0"))
+	}
+	if cOut.ByWhomID == 0 {
+		db.AddError(validations.NewError(cOut, "ByWhomID", "请选择操作员"))
+	}
+
+	from, to, d, err := fromToDevice(cOut.ReportItemID, cOut.ToWhomID, "Employee")
+	if err != nil {
+		db.AddError(validations.NewError(cOut, "FromReportItemID", err.Error()))
+		return
+	}
+
+	cOut.DeviceName = d.Name
+	cOut.ToWhomName = to.HolderName()
+	cOut.WarehouseName = from.HolderName()
+
+	byWhom, _ := holderByIDType(cOut.ByWhomID, "Employee")
+	cOut.ByWhomName = byWhom.HolderName()
+
+}
+
+func (cIn *ConsumableIn) Validate(db *gorm.DB) {
+	if cIn.ReportItemID == 0 {
+		db.AddError(validations.NewError(cIn, "ReportItemID", "购买的消耗品不能为空"))
+	}
+	if cIn.Quantity <= 0 {
+		db.AddError(validations.NewError(cIn, "Quantity", "购买的数量要大于0"))
+	}
+	if cIn.ByWhomID == 0 {
+		db.AddError(validations.NewError(cIn, "ByWhomID", "请选择操作员"))
+	}
+
+	from, _, d, err := fromToDevice(cIn.ReportItemID, 0, "Employee")
+	if err != nil {
+		db.AddError(validations.NewError(cIn, "ReportItemID", err.Error()))
+		return
+	}
+
+	cIn.DeviceName = d.Name
+	cIn.WarehouseName = from.HolderName()
+	byWhom, _ := holderByIDType(cIn.ByWhomID, "Employee")
+	cIn.ByWhomName = byWhom.HolderName()
 
 }
 

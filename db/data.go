@@ -44,9 +44,20 @@ func CurrentEmployeeDeviceCollection(prop interface{}, c *qor.Context) (r [][]st
 	return
 }
 
+func CurrentConsumableCollection(prop interface{}, c *qor.Context) (r [][]string) {
+	var whs = []*ReportItem{}
+	if err := DB.Where("who_has_them_type = 'Warehouse' AND device_category_id = 2 AND client_device_in_id = 0").Find(&whs).Error; err != nil {
+		panic(err)
+	}
+	for _, wh := range whs {
+		r = append(r, []string{fmt.Sprintf("%d", wh.ID), fmt.Sprintf("[%s] %s - 库存数量: %d - 仓库: %s", wh.DeviceCode, wh.DeviceName, wh.Count, wh.WhoHasThemName)})
+	}
+	return
+}
+
 func CurrentClientDeviceIns(prop interface{}, c *qor.Context) (r [][]string) {
 	var ris = []*ReportItem{}
-	if err := DB.Where("client_device_in_id <> 0 OR client_device_in_id IS NOT NULL").Find(&ris).Error; err != nil {
+	if err := DB.Where("client_device_in_id > 0").Find(&ris).Error; err != nil {
 		panic(err)
 	}
 	for _, ri := range ris {

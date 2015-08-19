@@ -83,16 +83,26 @@ type ClientDeviceOut struct {
 
 type ConsumableIn struct {
 	gorm.Model
-	Name  string
-	Code  string
-	Count int
+	ReportItemID  uint
+	DeviceName    string
+	Quantity      int
+	WarehouseName string
+	ByWhomID      uint
+	ByWhomName    string
+	Date          time.Time
 }
 
 type ConsumableOut struct {
 	gorm.Model
-	Name  string
-	Code  string
-	Count int
+	ReportItemID  uint
+	DeviceName    string
+	Quantity      int
+	WarehouseName string
+	ToWhomID      uint
+	ToWhomName    string
+	ByWhomID      uint
+	ByWhomName    string
+	Date          time.Time
 }
 
 // report data
@@ -105,6 +115,7 @@ type ReportItem struct {
 	DeviceID           uint
 	DeviceName         string
 	DeviceCode         string
+	DeviceCategoryID   uint
 	OperatedByWhomID   uint
 	OperatedByWhomName string
 	Count              int

@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "github.com/jinzhu/gorm"
+	"github.com/jinzhu/gorm"
 	"github.com/qor/qor"
 	"github.com/qor/qor/admin"
 	"github.com/qor/qor/i18n"
@@ -28,6 +28,12 @@ func main() {
 		Permission: roles.Deny(roles.Update, "admin").Deny(roles.Delete, "admin").Deny(roles.Create, "admin"),
 	})
 	reportItem.IndexAttrs("WhoHasThemName", "ClientName", "DeviceName", "DeviceCode", "Count")
+	reportItem.Scope(&admin.Scope{
+		Default: true,
+		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+			return db.Where("count > 0")
+		},
+	})
 
 	cdIn := adm.AddResource(&db.ClientDeviceIn{}, &admin.Config{
 		Menu:       []string{"日常操作"},
@@ -86,19 +92,35 @@ func main() {
 		Permission: noUpdatePermission,
 	})
 
-	deviceOut.IndexAttrs("Device", "ToWhom", "Quantity", "Warehouse", "ByWhom", "Date")
-	deviceOut.NewAttrs("DeviceID", "ToWhomID", "Quantity", "WarehouseID", "ByWhomID", "Date")
-	deviceOut.Meta(&admin.Meta{Name: "DeviceID", Type: "select_one", Collection: db.CurrentDeviceCollection})
+	deviceOut.IndexAttrs("ToWhomName", "FromWarehouseName", "DeviceName", "Quantity", "ByWhomName", "Date")
+	deviceOut.NewAttrs("FromReportItemID", "Quantity", "ToWhomID", "ByWhomID", "Date")
+	deviceOut.Meta(&admin.Meta{Name: "FromReportItemID", Type: "select_one", Collection: db.CurrentWarehouseDeviceCollection})
+	deviceOut.Meta(&admin.Meta{Name: "ToWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	deviceOut.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	deviceOut.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.DeviceOut).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
 
 	deviceIn := adm.AddResource(&db.DeviceIn{}, &admin.Config{
 		Menu:       []string{"日常操作"},
 		Permission: noUpdatePermission,
 	})
-
-	_ = deviceIn
-	// deviceIn.Meta(&admin.Meta{Name: "Code", Type: "select_one", Collection: inNumbers})
-
-	// deviceOut.Meta(&admin.Meta{Name: "Number", Type: "select_one", Collection: outNumbers})
+	deviceIn.IndexAttrs("FromWhomName", "ToWarehouseName", "DeviceName", "Quantity", "ByWhomName", "Date")
+	deviceIn.NewAttrs("FromReportItemID", "Quantity", "ToWarehouseID", "ByWhomID", "Date")
+	deviceIn.Meta(&admin.Meta{Name: "FromReportItemID", Type: "select_one", Collection: db.CurrentEmployeeDeviceCollection})
+	deviceIn.Meta(&admin.Meta{Name: "ToWarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
+	deviceIn.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	deviceIn.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.DeviceIn).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
 
 	consumableOut := adm.AddResource(&db.ConsumableOut{}, &admin.Config{Menu: []string{"日常操作"}})
 	consumableOut.Meta(&admin.Meta{Name: "Name", Type: "string"})

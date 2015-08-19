@@ -34,63 +34,52 @@ func (e Warehouse) HolderType() string {
 }
 
 func (dOut DeviceOut) AfterCreate(db *gorm.DB) (err error) {
-
-	warehouse, _, device, err1 := wed(dOut.WarehouseID, 0, dOut.DeviceID)
-	err = err1
-	if err != nil {
-		return
-	}
-
-	err = moveDevice(warehouse, dOut.ToWhom, &device, uint(dOut.Quantity))
-
+	err = moveDeviceByID(dOut.FromReportItemID, dOut.ToWhomID, "Employee", int(dOut.Quantity))
 	return
 }
 
 func (dOut DeviceOut) BeforeDelete(db *gorm.DB) (err error) {
-	var dIn DeviceIn
-	DB.Where(&DeviceIn{DeviceOutID: dOut.ID}).Find(&dIn)
-	if dIn.ID > 0 {
-		err = errors.New("设备已经还回，不能删除。")
-		return
-	}
-
-	warehouse, _, device, err1 := wed(dOut.WarehouseID, 0, dOut.DeviceID)
-	err = err1
-	if err != nil {
-		return
-	}
-
-	err = moveDevice(dOut.ToWhom, warehouse, &device, uint(dOut.Quantity))
-
+	// panic(fmt.Sprintf("%+v", dOut))
+	err = moveDeviceByID(dOut.FromReportItemID, dOut.ToWhomID, "Employee", -1*int(dOut.Quantity))
 	return
 }
 
 func (dIn DeviceIn) AfterCreate(db *gorm.DB) (err error) {
+	err = moveDeviceByID(dIn.FromReportItemID, dIn.ToWarehouseID, "Warehouse", dIn.Quantity)
+	return
+}
 
-	warehouse, _, _, err1 := wed(dIn.WarehouseID, 0, 0)
-	err = err1
-	if err != nil {
-		return
-	}
+func (dIn DeviceIn) BeforeDelete(db *gorm.DB) (err error) {
+	err = moveDeviceByID(dIn.FromReportItemID, dIn.ToWarehouseID, "Warehouse", -1*dIn.Quantity)
+	return
+}
 
-	var dOut DeviceOut
-	err = DB.Find(&dOut, dIn.DeviceOutID).Error
+func moveDeviceByID(fromReportItemID uint, toHolderId uint, toHolderType string, quantity int) (err error) {
+	var d Device
+	var from, to DeviceHolder
+	from, to, d, err = fromToDevice(fromReportItemID, toHolderId, toHolderType)
+
+	err = moveDevice(from, to, &d, quantity)
+	return
+}
+
+func fromToDevice(fromReportItemID uint, toHolderId uint, toHolderType string) (from DeviceHolder, to DeviceHolder, d Device, err error) {
+	d, from, err = deviceAndHolderByReportItem(fromReportItemID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	_, fromWhom, device, err2 := wed(0, dOut.ToWhomID, dOut.DeviceID)
-	err = err2
+	to, err = holderByIDType(toHolderId, toHolderType)
+
 	if err != nil {
+		log.Println(err)
 		return
 	}
-
-	err = moveDevice(&fromWhom, &warehouse, &device, uint(dIn.Quantity))
 	return
 }
 
-func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity uint) (err error) {
+func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity int) (err error) {
 	var fromRi, toRi *ReportItem
 	fromRi, err = getOrCreateReportItem(from, device, 0)
 	if err != nil {
@@ -104,8 +93,16 @@ func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity uin
 		return
 	}
 
-	if fromRi.Count < quantity {
-		err = errors.New(fmt.Sprintf("数量输入有误，不能大于%d", fromRi.Count))
+	max := 0
+	if fromRi.Count-quantity < 0 {
+		max = fromRi.Count
+	}
+	if toRi.Count+quantity < 0 {
+		max = toRi.Count
+	}
+
+	if max > 0 {
+		err = errors.New(fmt.Sprintf("数量输入有误，不能大于%d", max))
 		return
 	}
 
@@ -123,15 +120,72 @@ func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity uin
 	return
 }
 
+func holderByIDType(id uint, t string) (h DeviceHolder, err error) {
+	switch t {
+	case "Employee":
+		employee := Employee{}
+		err = DB.Find(&employee, id).Error
+		h = employee
+	case "Warehouse":
+		warehouse := Warehouse{}
+		err = DB.Find(&warehouse, id).Error
+		h = warehouse
+	}
+	return
+}
+
 func (d Device) AfterCreate(db *gorm.DB) (err error) {
 
-	warehouse, _, _, err1 := wed(d.WarehouseID, 0, 0)
-	err = err1
+	warehouse := Warehouse{}
+	err = DB.Find(&warehouse, d.WarehouseID).Error
 	if err != nil {
 		return
 	}
 
 	_, err = getOrCreateReportItem(warehouse, &d, d.TotalQuantity)
+	return
+}
+
+func (d Device) BeforeDelete(db *gorm.DB) (err error) {
+
+	warehouse := Warehouse{}
+	err = DB.Find(&warehouse, d.WarehouseID).Error
+	if err != nil {
+		return
+	}
+
+	var ri *ReportItem
+	ri, err = getOrCreateReportItem(warehouse, &d, 0)
+	if uint(ri.Count) != d.TotalQuantity {
+		err = errors.New(fmt.Sprintf("有人带出设备%s，不能删除，当前库存数量%d，总数量%d", d.Name, ri.Count, d.TotalQuantity))
+		return
+	}
+
+	err = DB.Delete(&ri).Error
+	return
+}
+
+func deviceAndHolderByReportItem(reportItemID uint) (device Device, holder DeviceHolder, err error) {
+
+	var ri ReportItem
+
+	err = DB.Find(&ri, reportItemID).Error
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = DB.Find(&device, ri.DeviceID).Error
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	holder, err = holderByIDType(ri.WhoHasThemID, ri.WhoHasThemType)
+	if err != nil {
+		log.Println(err)
+	}
 	return
 }
 
@@ -152,7 +206,7 @@ func getOrCreateReportItem(holder DeviceHolder, device *Device, count uint) (r *
 		DeviceID:       device.ID,
 		DeviceCode:     device.Code,
 		DeviceName:     device.Name,
-		Count:          count,
+		Count:          int(count),
 	}
 
 	err = DB.Create(&reportItem).Error
@@ -160,18 +214,6 @@ func getOrCreateReportItem(holder DeviceHolder, device *Device, count uint) (r *
 		log.Println(err)
 	}
 	r = &reportItem
-	return
-}
-
-func (cdIn DeviceIn) BeforeDelete(db *gorm.DB) (err error) {
-	var cdOut ClientDeviceOut
-	err = DB.Where(&ClientDeviceOut{ClientDeviceInID: cdIn.ID}).Find(&cdOut).Error
-	if cdOut.ID > 0 {
-		err = errors.New("设备已经还回，不能删除。")
-		return
-	}
-
-	err = DB.Where(&ReportItem{ClientDeviceInID: cdIn.ID}).Delete(&ReportItem{}).Error
 	return
 }
 
@@ -213,42 +255,21 @@ func (cdIn ClientDeviceIn) BeforeDelete(db *gorm.DB) (err error) {
 	return
 }
 
-func wed(warehouseID uint, employeeID uint, deviceID uint) (warehouse Warehouse, employee Employee, device Device, err error) {
-
-	if warehouseID > 0 {
-		err = DB.Find(&warehouse, warehouseID).Error
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}
-
-	if employeeID > 0 {
-		err = DB.Find(&employee, employeeID).Error
-		if err != nil {
-			log.Println(err)
-		}
-
-	}
-
-	if deviceID > 0 {
-		err = DB.Find(&device, deviceID).Error
-		if err != nil {
-			log.Println(err)
-		}
-
-	}
-
-	return
-}
-
 func createOrUpdateReportItem(clientDeviceInID uint, warehouseId uint, deviceName string, clientName string, operatedByWhomId uint, quantity int) (err error) {
 
 	var reportItem ReportItem
 
-	warehouse, bywhom, _, err1 := wed(warehouseId, operatedByWhomId, 0)
-	err = err1
+	bywhom := Employee{}
+	err = DB.Find(&bywhom, operatedByWhomId).Error
 	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	warehouse := Warehouse{}
+	err = DB.Find(&warehouse, warehouseId).Error
+	if err != nil {
+		log.Println(err)
 		return
 	}
 
@@ -259,7 +280,7 @@ func createOrUpdateReportItem(clientDeviceInID uint, warehouseId uint, deviceNam
 			WhoHasThemType:     "Warehouse",
 			ClientName:         clientName,
 			DeviceName:         deviceName,
-			Count:              uint(quantity),
+			Count:              quantity,
 			OperatedByWhomID:   bywhom.ID,
 			OperatedByWhomName: bywhom.Name,
 			ClientDeviceInID:   clientDeviceInID,

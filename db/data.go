@@ -22,13 +22,24 @@ func WarehouseCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	return
 }
 
-func CurrentDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
+func CurrentWarehouseDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
 	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND client_device_in_id = 0").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
-		r = append(r, []string{fmt.Sprintf("%d", wh.DeviceID), fmt.Sprintf("[%s] %s", wh.DeviceCode, wh.DeviceName)})
+		r = append(r, []string{fmt.Sprintf("%d", wh.ID), fmt.Sprintf("[%s] %s - 剩余数量: %d - 仓库: %s", wh.DeviceCode, wh.DeviceName, wh.Count, wh.WhoHasThemName)})
+	}
+	return
+}
+
+func CurrentEmployeeDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
+	var whs = []*ReportItem{}
+	if err := DB.Where("count > 0 AND who_has_them_type = 'Employee' AND client_device_in_id = 0").Find(&whs).Error; err != nil {
+		panic(err)
+	}
+	for _, wh := range whs {
+		r = append(r, []string{fmt.Sprintf("%d", wh.ID), fmt.Sprintf("[%s] %s - 带出数量: %d - 员工: %s", wh.DeviceCode, wh.DeviceName, wh.Count, wh.WhoHasThemName)})
 	}
 	return
 }

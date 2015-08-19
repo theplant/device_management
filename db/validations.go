@@ -37,6 +37,64 @@ func (cdIn *ClientDeviceIn) Validate(db *gorm.DB) {
 	}
 }
 
+func (dOut *DeviceOut) Validate(db *gorm.DB) {
+	if dOut.FromReportItemID == 0 {
+		db.AddError(validations.NewError(dOut, "FromReportItemID", "带出设备不能为空"))
+	}
+	if dOut.ToWhomID == 0 {
+		db.AddError(validations.NewError(dOut, "ToWhomID", "设备带出人不能为空"))
+	}
+	if dOut.Quantity <= 0 {
+		db.AddError(validations.NewError(dOut, "Quantity", "带出设备的数量要大于0"))
+	}
+	if dOut.ByWhomID == 0 {
+		db.AddError(validations.NewError(dOut, "ByWhomID", "请选择操作员"))
+	}
+
+	from, to, d, err := fromToDevice(dOut.FromReportItemID, dOut.ToWhomID, "Employee")
+	if err != nil {
+		db.AddError(validations.NewError(dOut, "FromReportItemID", err.Error()))
+		return
+	}
+
+	dOut.DeviceName = d.Name
+	dOut.ToWhomName = to.HolderName()
+	dOut.FromWarehouseName = from.HolderName()
+
+	byWhom, _ := holderByIDType(dOut.ByWhomID, "Employee")
+	dOut.ByWhomName = byWhom.HolderName()
+
+}
+
+func (dIn *DeviceIn) Validate(db *gorm.DB) {
+	if dIn.FromReportItemID == 0 {
+		db.AddError(validations.NewError(dIn, "FromReportItemID", "带出设备不能为空"))
+	}
+	if dIn.ToWarehouseID == 0 {
+		db.AddError(validations.NewError(dIn, "ToWhomID", "设备还回仓库不能为空"))
+	}
+	if dIn.Quantity <= 0 {
+		db.AddError(validations.NewError(dIn, "Quantity", "还回设备的数量要大于0"))
+	}
+	if dIn.ByWhomID == 0 {
+		db.AddError(validations.NewError(dIn, "ByWhomID", "请选择操作员"))
+	}
+
+	from, to, d, err := fromToDevice(dIn.FromReportItemID, dIn.ToWarehouseID, "Employee")
+	if err != nil {
+		db.AddError(validations.NewError(dIn, "FromReportItemID", err.Error()))
+		return
+	}
+
+	dIn.DeviceName = d.Name
+	dIn.ToWarehouseName = to.HolderName()
+	dIn.FromWhomName = from.HolderName()
+
+	byWhom, _ := holderByIDType(dIn.ByWhomID, "Employee")
+	dIn.ByWhomName = byWhom.HolderName()
+
+}
+
 func (cdOut *ClientDeviceOut) Validate(db *gorm.DB) {
 
 	if cdOut.ClientDeviceInID == 0 {

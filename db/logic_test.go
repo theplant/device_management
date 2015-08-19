@@ -1,6 +1,7 @@
 package db
 
 import (
+	"github.com/jinzhu/gorm"
 	"testing"
 	"time"
 )
@@ -76,62 +77,66 @@ func TestClientDeviceIn(t *testing.T) {
 }
 
 func TestDeviceOutAndIn(t *testing.T) {
-	DB.Unscoped().Delete(&DeviceIn{})
-	DB.Unscoped().Delete(&DeviceOut{})
-	DB.Unscoped().Delete(&Device{})
-	DB.Unscoped().Delete(&ReportItem{})
+	gorm.Delete(DB.Unscoped().NewScope(&DeviceIn{}))
+	gorm.Delete(DB.Unscoped().NewScope(&DeviceOut{}))
+	gorm.Delete(DB.Unscoped().NewScope(&Device{}))
+	gorm.Delete(DB.Unscoped().NewScope(&ReportItem{})) // call without callbacks
 
 	felix, wensanlu := employeeAndWarehouse()
 	iphone := deviceiPhone(wensanlu.ID)
+	from, _ := getOrCreateReportItem(wensanlu, &iphone, 0)
 
 	dOut := DeviceOut{
-		Device:    iphone,
-		ToWhom:    felix,
-		Quantity:  5,
-		Date:      time.Now(),
-		Warehouse: wensanlu,
-		ByWhom:    felix,
+		FromReportItemID: from.ID,
+		ToWhomID:         felix.ID,
+		Quantity:         5,
+		Date:             time.Now(),
+		ByWhomID:         felix.ID,
 	}
 
 	DB.Create(&dOut)
 
-	ris := []*ReportItem{}
-	DB.Where(&ReportItem{DeviceID: iphone.ID, WhoHasThemID: felix.ID, WhoHasThemType: "Employee"}).Find(&ris)
-	if len(ris) == 0 {
+	var ri *ReportItem
+	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+
+	if ri.ID == 0 {
 		t.Error("report item not created")
 	}
+
 	dOut2 := dOut
 	dOut2.ID = 0
 	DB.Create(&dOut2)
-	DB.Where(&ReportItem{DeviceID: iphone.ID, WhoHasThemID: felix.ID, WhoHasThemType: "Employee"}).Find(&ris)
-	if len(ris) > 1 {
-		t.Error("didn't update existing report item")
-	}
+	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
 
-	if ris[0].Count != 10 {
+	if ri.Count != 10 {
 		t.Error("report item count updated wrong, should be 10")
 	}
 
 	DB.Delete(&dOut2)
-	DB.Where(&ReportItem{DeviceID: iphone.ID, WhoHasThemID: felix.ID, WhoHasThemType: "Employee"}).Find(&ris)
-	if ris[0].Count != 5 {
+
+	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	if ri.Count != 5 {
 		t.Error("report item count updated wrong, should be 5")
 	}
 
+	inFrom, _ := getOrCreateReportItem(felix, &iphone, 0)
 	dIn := &DeviceIn{
-		DeviceOutID: dOut.ID,
-		Quantity:    3,
-		Warehouse:   wensanlu,
-		Date:        time.Now(),
-		ByWhom:      felix,
+		FromReportItemID: inFrom.ID,
+		Quantity:         3,
+		ToWarehouseID:    wensanlu.ID,
+		Date:             time.Now(),
+		ByWhomID:         felix.ID,
 	}
 	DB.Create(dIn)
-	DB.Where(&ReportItem{DeviceID: iphone.ID, WhoHasThemID: felix.ID, WhoHasThemType: "Employee"}).Find(&ris)
-	if len(ris) == 0 {
-		t.Error("report item not created")
+	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+
+	if ri.Count != 2 {
+		t.Error("report item count updated wrong, should be 2")
 	}
 
-	if ris[0].Count != 2 {
-		t.Error("report item count updated wrong, should be 2")
+	DB.Delete(&dIn)
+	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	if ri.Count != 5 {
+		t.Error("report item count updated wrong, should be 5 again")
 	}
 }

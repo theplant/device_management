@@ -7,9 +7,12 @@ import (
 
 // master data
 type Device struct {
-	gorm.Model
+	ID            uint `gorm:"primary_key"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     *time.Time `sql:"unique_index:idx_code_deleted_at"`
 	Name          string
-	Code          string `sql:"unique"`
+	Code          string `sql:"unique_index:idx_code_deleted_at"`
 	TotalQuantity uint
 	WarehouseID   uint
 	CategoryID    uint
@@ -30,29 +33,28 @@ type Employee struct {
 // operations data
 type DeviceIn struct {
 	gorm.Model
-	DeviceOutID  uint
-	DeviceName   string
-	FromWhomName string
-	Quantity     int
-	WarehouseID  uint
-	Warehouse    Warehouse
-	Date         time.Time
-	ByWhomID     uint
-	ByWhom       Employee
+	FromReportItemID uint
+	FromWhomName     string
+	DeviceName       string
+	Quantity         int
+	ToWarehouseID    uint
+	ToWarehouseName  string
+	ByWhomID         uint
+	ByWhomName       string
+	Date             time.Time
 }
 
 type DeviceOut struct {
 	gorm.Model
-	DeviceID    uint
-	Device      Device
-	Quantity    uint
-	ToWhomID    uint
-	ToWhom      Employee
-	WarehouseID uint
-	Warehouse   Warehouse
-	ByWhomID    uint
-	ByWhom      Employee
-	Date        time.Time
+	FromReportItemID  uint
+	FromWarehouseName string
+	DeviceName        string
+	Quantity          uint
+	ToWhomID          uint
+	ToWhomName        string
+	ByWhomID          uint
+	ByWhomName        string
+	Date              time.Time
 }
 
 type ClientDeviceIn struct {
@@ -105,6 +107,6 @@ type ReportItem struct {
 	DeviceCode         string
 	OperatedByWhomID   uint
 	OperatedByWhomName string
-	Count              uint
+	Count              int
 	ClientDeviceInID   uint
 }

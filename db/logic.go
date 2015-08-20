@@ -39,7 +39,6 @@ func (dOut DeviceOut) AfterCreate(db *gorm.DB) (err error) {
 }
 
 func (dOut DeviceOut) BeforeDelete(db *gorm.DB) (err error) {
-	// panic(fmt.Sprintf("%+v", dOut))
 	err = moveDeviceByID(dOut.FromReportItemID, dOut.ToWhomID, "Employee", -1*int(dOut.Quantity))
 	return
 }

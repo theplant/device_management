@@ -9,7 +9,6 @@ import (
 // this is configured from env variables
 var (
 	Env               string
-	WebDir            string
 	MySQLHost         string
 	MySQLPort         string
 	MySQLDatabase     string
@@ -20,15 +19,14 @@ var (
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 
-	Env = envOrPanic("PROFILE_ENV", false)
-	WebDir = envOrPanic("PROFILE_WEBDIR", false)
+	Env = envOrPanic("DEVICEM_ENV", false)
 
-	MySQLHost = envOrPanic("PROFILE_MYSQL_PORT_3306_TCP_ADDR", false)
-	MySQLPort = envOrPanic("PROFILE_MYSQL_PORT_3306_TCP_PORT", false)
-	MySQLRootPassword = envOrPanic("PROFILE_MYSQL_ENV_MYSQL_ROOT_PASSWORD", true)
+	MySQLHost = envOrPanic("DEVICEM_MYSQL_PORT_3306_TCP_ADDR", false)
+	MySQLPort = envOrPanic("DEVICEM_MYSQL_PORT_3306_TCP_PORT", false)
+	MySQLRootPassword = envOrPanic("DEVICEM_MYSQL_ENV_MYSQL_ROOT_PASSWORD", true)
 
-	MySQLDatabase = envOrPanic("PROFILE_MYSQL_DATABASE", false)
-	Verbose = (envOrPanic("PROFILE_VERBOSE", true) != "")
+	MySQLDatabase = envOrPanic("DEVICEM_MYSQL_DATABASE", false)
+	Verbose = (envOrPanic("DEVICEM_VERBOSE", true) != "")
 }
 
 func envOrPanic(key string, allowEmpty bool) (r string) {

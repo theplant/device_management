@@ -5,9 +5,9 @@
 # http://www.sequelpro.com/
 # http://code.google.com/p/sequel-pro/
 #
-# Host: 127.0.0.1 (MySQL 5.6.19)
+# Host: 127.0.0.1 (MySQL 5.6.25)
 # Database: device_management
-# Generation Time: 2015-08-19 10:40:57 +0000
+# Generation Time: 2015-08-20 10:17:14 +0000
 # ************************************************************
 
 
@@ -139,7 +139,7 @@ VALUES
 	('en-US','qor_admin.带出设备不能为空','带出设备不能为空'),
 	('en-US','qor_admin.设备带出人不能为空','设备带出人不能为空'),
 	('en-US','qor_admin.带出设备的数量要大于0','带出设备的数量要大于0'),
-	('en-US','qor_admin.Logged in as {{$1}}','Logged in as {{$1}}'),
+	('en-US','qor_admin.Logged in as {{$1}}','{{$1}}'),
 	('en-US','qor_admin.logo','<a href=\"{{.Prefix}}\"><span class=\"visuallyhidden\">QOR</span></a><a href=\"/\" target=\"_blank\">View Site <i class=\"material-icons md-14\" aria-hidden=\"true\">open_in_new</i></a>'),
 	('en-US','qor_admin.powered_by','Powered by <a href=\"http://getqor.com\" target=\"_blank\">QOR</a>'),
 	('en-US','qor_admin.Search','Search'),
@@ -271,13 +271,15 @@ VALUES
 	('en-US','qor_admin.qor_admin.warehouses.Name','名称'),
 	('en-US','qor_admin.qor_admin.warehouses.Address','地址'),
 	('en-US','qor_admin.qor_admin.employees.Add Employee','添加员工'),
-	('en-US','qor_admin.qor_admin.employees.Edit Employee','Edit Employee'),
+	('en-US','qor_admin.qor_admin.employees.Edit Employee','编辑员工'),
 	('en-US','qor_admin.qor_admin.warehouses.Add Warehouse','添加仓库'),
-	('en-US','qor_admin.Next Page','Next Page'),
+	('en-US','qor_admin.Next Page','下一页'),
 	('en-US','qor_admin.resource_successfully_updated','{{.Name}} was successfully updated'),
 	('en-US','qor_admin.代码已经存在了，不能重复','代码已经存在了，不能重复'),
 	('en-US','qor_admin.更新后的库存数量不能小于零','更新后的库存数量不能小于零'),
-	('en-US','qor_admin.更新后的库存数量不能小于零，在库0','更新后的库存数量不能小于零，在库0');
+	('en-US','qor_admin.更新后的库存数量不能小于零，在库0','更新后的库存数量不能小于零，在库0'),
+	('en-US','qor_admin.Select an Option','请选择一项'),
+	('en-US','qor_admin.qor_admin.warehouses.Edit Warehouse','编辑仓库');
 
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;

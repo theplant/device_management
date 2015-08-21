@@ -100,6 +100,7 @@ func TestDeviceUpdateTotalCount(t *testing.T) {
 	DB.Create(&dOut)
 
 	iphone.TotalQuantity = 9
+	iphone.Code = "NEWIPHONE6"
 	err := DB.Save(iphone).Error
 	if err == nil {
 		t.Error("should have error")

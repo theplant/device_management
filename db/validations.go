@@ -10,7 +10,7 @@ func (device Device) Validate(db *gorm.DB) {
 	var deviceInDb Device
 	db.Where("code = ?", device.Code).First(&deviceInDb)
 
-	if deviceInDb.ID != device.ID {
+	if deviceInDb.ID != 0 && deviceInDb.ID != device.ID {
 		db.AddError(validations.NewError(device, "Code", "代码已经存在了，不能重复"))
 	}
 

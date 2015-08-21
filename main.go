@@ -182,9 +182,12 @@ func main() {
 
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)
-	adm.AddResource(i18n.New(I18nBackend), &admin.Config{Menu: []string{"系统设置"}})
+	adm.AddResource(i18n.New(I18nBackend), &admin.Config{Menu: []string{"系统设置"}, Invisible: true})
 
 	adm.MountTo("/admin", http.DefaultServeMux)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/report_items", 302)
+	})
 
 	log.Println("Starting Server at 9000.")
 	err := http.ListenAndServe(":9000", nil)
@@ -196,11 +199,11 @@ func main() {
 type Auth struct{}
 
 func (Auth) LoginURL(c *admin.Context) string {
-	return "/"
+	return "/admin/report_items"
 }
 
 func (Auth) LogoutURL(c *admin.Context) string {
-	return "/"
+	return "/admin/report_items"
 }
 
 func (Auth) GetCurrentUser(c *admin.Context) qor.CurrentUser {

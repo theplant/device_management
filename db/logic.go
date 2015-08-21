@@ -108,24 +108,19 @@ func moveDevice(from DeviceHolder, to DeviceHolder, device *Device, quantity int
 		return
 	}
 
-	max := 0
-	if fromRi.Count-quantity < 0 {
-		max = fromRi.Count
-	}
-
+	fcount := fromRi.Count - quantity
+	tcount := 0
 	if to != nil {
 		toRi, err = getOrCreateReportItem(to, device, 0)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		if toRi.Count+quantity < 0 {
-			max = toRi.Count
-		}
+		tcount = toRi.Count + quantity
 	}
 
-	if max > 0 {
-		err = errors.New(fmt.Sprintf("数量输入有误，不能大于%d", max))
+	if fcount < 0 || tcount < 0 {
+		err = errors.New(fmt.Sprintf("数量输入有误"))
 		return
 	}
 

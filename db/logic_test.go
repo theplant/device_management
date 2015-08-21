@@ -185,6 +185,18 @@ func TestDeviceOutAndIn(t *testing.T) {
 	if ri.Count != 5 {
 		t.Error("report item count updated wrong, should be 5 again")
 	}
+
+	dOut2.Quantity = 15
+	dOut2.ID = 0
+	DB.Create(&dOut2)
+	dIn2 := dIn
+	dIn2.ID = 0
+	dIn2.Quantity = 20
+	DB.Create(&dIn2)
+	err := DB.Delete(&dOut2).Error
+	if err == nil {
+		t.Error("should not be able to delete after returned")
+	}
 }
 
 func TestConsumableInAndOut(t *testing.T) {

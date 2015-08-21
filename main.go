@@ -169,16 +169,19 @@ func main() {
 	device.Meta(&admin.Meta{Name: "CategoryID", Type: "select_one", Collection: db.DeviceCategories})
 	device.Meta(&admin.Meta{Name: "WarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
 	device.EditAttrs("Name", "Code", "TotalQuantity")
+	device.IndexAttrs("Name", "Code", "TotalQuantity")
 
 	// _ = device
 
-	adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
+	employee := adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
+	employee.IndexAttrs("Name", "Mobile")
 
 	warehouse := adm.AddResource(&db.Warehouse{}, &admin.Config{Menu: []string{"数据维护"}})
 	warehouse.Meta(&admin.Meta{Name: "Name", Type: "string"})
 	warehouse.Meta(&admin.Meta{Name: "Address", Type: "string"})
 	warehouse.EditAttrs("Name", "Address")
 	warehouse.NewAttrs(warehouse.EditAttrs()...)
+	warehouse.IndexAttrs("Name", "Address")
 
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)

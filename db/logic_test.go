@@ -14,6 +14,9 @@ func employeeAndWarehouse() (felix Employee, wensanlu Warehouse) {
 
 func deviceiPhone(warehouseID uint) (iPhone Device) {
 	DB.Where(&Device{Name: "苹果iPhone", Code: "IPHONE6", TotalQuantity: 20, WarehouseID: warehouseID, CategoryID: 1}).Assign(&Device{}).FirstOrCreate(&iPhone)
+	if iPhone.CategoryName != "自有设备" {
+		panic("didn't assign category name" + iPhone.CategoryName)
+	}
 	return
 }
 
@@ -30,12 +33,14 @@ func TestClientDeviceIn(t *testing.T) {
 	felix, wensanlu := employeeAndWarehouse()
 	// t.Error(felix, wensanlu)
 	cdIn := &ClientDeviceIn{
-		DeviceName: "游标卡尺",
-		ClientName: "杭州浩天化工有限公司",
-		Quantity:   5,
-		Date:       time.Now(),
-		Warehouse:  wensanlu,
-		ByWhom:     felix,
+		DeviceName:    "游标卡尺",
+		ClientName:    "杭州浩天化工有限公司",
+		Quantity:      5,
+		Date:          time.Now(),
+		WarehouseID:   wensanlu.ID,
+		WarehouseName: wensanlu.Name,
+		ByWhomID:      felix.ID,
+		ByWhomName:    felix.Name,
 	}
 
 	DB.Create(cdIn)
@@ -43,18 +48,18 @@ func TestClientDeviceIn(t *testing.T) {
 	ris := []*ReportItem{}
 	DB.Where(&ReportItem{ClientDeviceInID: cdIn.ID}).Find(&ris)
 	if len(ris) == 0 {
-		t.Error("report item not created")
+		t.Fatal("report item not created")
 	}
 
 	cdOut := &ClientDeviceOut{
-		ClientDeviceInID: cdIn.ID,
-		Date:             time.Now(),
-		ByWhom:           felix,
+		ReportItemID: ris[0].ID,
+		Date:         time.Now(),
+		ByWhomID:     felix.ID,
 	}
 
 	DB.Create(cdOut)
 	DB.Where(&ReportItem{ClientDeviceInID: cdIn.ID}).Find(&ris)
-	if len(ris) > 0 {
+	if len(ris) > 0 && ris[0].Count > 0 {
 		t.Error("report item not removed when return")
 	}
 
@@ -75,7 +80,7 @@ func TestClientDeviceIn(t *testing.T) {
 
 	DB.Delete(&cdIn)
 	DB.Where(&ReportItem{ClientDeviceInID: cdIn.ID}).Find(&ris)
-	if len(ris) > 0 {
+	if len(ris) > 0 && ris[0].Count > 0 {
 		t.Error("report item not removed when delete in")
 	}
 
@@ -87,7 +92,7 @@ func TestDeviceUpdateTotalCount(t *testing.T) {
 	gorm.Delete(DB.Unscoped().NewScope(&ReportItem{})) // call without callbacks
 	felix, wensanlu := employeeAndWarehouse()
 	iphone := deviceiPhone(wensanlu.ID)
-	from, _ := getOrCreateReportItem(wensanlu, &iphone, 0)
+	from, _ := getOrCreateReportItem(wensanlu, &iphone, nil, 0)
 
 	dOut := DeviceOut{
 		FromReportItemID: from.ID,
@@ -111,7 +116,7 @@ func TestDeviceUpdateTotalCount(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	ri, _ := getOrCreateReportItem(wensanlu, &iphone, 0)
+	ri, _ := getOrCreateReportItem(wensanlu, &iphone, nil, 0)
 	if ri.Count != 0 {
 		t.Error("update total quantity didn't change report item")
 	}
@@ -125,7 +130,7 @@ func TestDeviceOutAndIn(t *testing.T) {
 
 	felix, wensanlu := employeeAndWarehouse()
 	iphone := deviceiPhone(wensanlu.ID)
-	from, _ := getOrCreateReportItem(wensanlu, &iphone, 0)
+	from, _ := getOrCreateReportItem(wensanlu, &iphone, nil, 0)
 
 	dOut := DeviceOut{
 		FromReportItemID: from.ID,
@@ -138,7 +143,7 @@ func TestDeviceOutAndIn(t *testing.T) {
 	DB.Create(&dOut)
 
 	var ri *ReportItem
-	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	ri, _ = getOrCreateReportItem(felix, &iphone, nil, 0)
 
 	if ri.ID == 0 {
 		t.Error("report item not created")
@@ -147,7 +152,7 @@ func TestDeviceOutAndIn(t *testing.T) {
 	dOut2 := dOut
 	dOut2.ID = 0
 	DB.Create(&dOut2)
-	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	ri, _ = getOrCreateReportItem(felix, &iphone, nil, 0)
 
 	if ri.Count != 10 {
 		t.Error("report item count updated wrong, should be 10")
@@ -155,12 +160,12 @@ func TestDeviceOutAndIn(t *testing.T) {
 
 	DB.Delete(&dOut2)
 
-	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	ri, _ = getOrCreateReportItem(felix, &iphone, nil, 0)
 	if ri.Count != 5 {
 		t.Error("report item count updated wrong, should be 5")
 	}
 
-	inFrom, _ := getOrCreateReportItem(felix, &iphone, 0)
+	inFrom, _ := getOrCreateReportItem(felix, &iphone, nil, 0)
 	dIn := &DeviceIn{
 		FromReportItemID: inFrom.ID,
 		Quantity:         3,
@@ -174,14 +179,14 @@ func TestDeviceOutAndIn(t *testing.T) {
 		t.Error("ToWarehouseName not updated correctly")
 	}
 
-	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	ri, _ = getOrCreateReportItem(felix, &iphone, nil, 0)
 
 	if ri.Count != 2 {
 		t.Error("report item count updated wrong, should be 2")
 	}
 
 	DB.Delete(&dIn)
-	ri, _ = getOrCreateReportItem(felix, &iphone, 0)
+	ri, _ = getOrCreateReportItem(felix, &iphone, nil, 0)
 	if ri.Count != 5 {
 		t.Error("report item count updated wrong, should be 5 again")
 	}
@@ -207,7 +212,7 @@ func TestConsumableInAndOut(t *testing.T) {
 
 	felix, wensanlu := employeeAndWarehouse()
 	ink := deviceInk(wensanlu.ID)
-	from, _ := getOrCreateReportItem(wensanlu, &ink, 0)
+	from, _ := getOrCreateReportItem(wensanlu, &ink, nil, 0)
 
 	cOut := ConsumableOut{
 		ReportItemID: from.ID,
@@ -220,7 +225,7 @@ func TestConsumableInAndOut(t *testing.T) {
 	DB.Create(&cOut)
 
 	var ri *ReportItem
-	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, nil, 0)
 
 	if ri.ID == 0 {
 		t.Error("report item not created")
@@ -229,7 +234,7 @@ func TestConsumableInAndOut(t *testing.T) {
 	cOut2 := cOut
 	cOut2.ID = 0
 	DB.Create(&cOut2)
-	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, nil, 0)
 
 	if ri.Count != 10 {
 		t.Error("report item count updated wrong, should be 10")
@@ -237,12 +242,12 @@ func TestConsumableInAndOut(t *testing.T) {
 
 	DB.Delete(&cOut2)
 
-	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, nil, 0)
 	if ri.Count != 15 {
 		t.Error("report item count updated wrong, should be 15")
 	}
 
-	inFrom, _ := getOrCreateReportItem(wensanlu, &ink, 0)
+	inFrom, _ := getOrCreateReportItem(wensanlu, &ink, nil, 0)
 	cIn := &ConsumableIn{
 		ReportItemID: inFrom.ID,
 		Quantity:     3,
@@ -250,14 +255,14 @@ func TestConsumableInAndOut(t *testing.T) {
 		ByWhomID:     felix.ID,
 	}
 	DB.Create(cIn)
-	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, nil, 0)
 
 	if ri.Count != 18 {
 		t.Error("report item count updated wrong, should be 18")
 	}
 
 	DB.Delete(&cIn)
-	ri, _ = getOrCreateReportItem(wensanlu, &ink, 0)
+	ri, _ = getOrCreateReportItem(wensanlu, &ink, nil, 0)
 	if ri.Count != 15 {
 		t.Error("report item count updated wrong, should be 15 again")
 	}

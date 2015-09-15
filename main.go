@@ -37,14 +37,48 @@ func main() {
 		},
 	})
 
+	reportItem.Scope(&admin.Scope{
+		Name:  "employee-take-outs",
+		Label: "Employee Take Outs",
+		Group: "State",
+		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+			return db.Where("who_has_them_type = ?", "Employee")
+		},
+	})
+	reportItem.Scope(&admin.Scope{
+		Name:  "to-check-company",
+		Label: "To Check Company",
+		Group: "State",
+		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+			return db.Where("who_has_them_type = ?", "DeviceCheckCompany")
+		},
+	})
+	reportItem.Scope(&admin.Scope{
+		Name:  "in-warehouse",
+		Label: "In Warehouse",
+		Group: "State",
+		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
+			return db.Where("who_has_them_type = ?", "Warehouse")
+		},
+	})
+
 	reportItem.Meta(&admin.Meta{
 		Name: "WhoHasThemName",
 		Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
 			ri := resource.(*db.ReportItem)
 			name := ri.WhoHasThemName
-			if ri.WhoHasThemType == "Employee" {
-				name = fmt.Sprintf(`<strong style="color:red">%s</string>`, name)
+			color := "black"
+			switch ri.WhoHasThemType {
+			case "Employee":
+				color = "red"
+			case "DeviceCheckCompany":
+				color = "blue"
 			}
+
+			if color != "black" {
+				name = fmt.Sprintf(`<strong style="color:%s">%s</string>`, color, name)
+			}
+
 			return template.HTML(name)
 		},
 	})
@@ -54,16 +88,16 @@ func main() {
 		Permission: noUpdatePermission,
 	})
 
-	cdIn.Meta(&admin.Meta{Name: "Warehouse", Type: "select_one", Collection: db.WarehouseCollection})
-	cdIn.Meta(&admin.Meta{Name: "ByWhom", Type: "select_one", Collection: db.EmployeeCollection})
+	cdIn.Meta(&admin.Meta{Name: "WarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
+	cdIn.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
 	// cdIn.Scope(&admin.Scope{
 	// 	Default: true,
 	// 	Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 	// 		return db.Preload("Device").Preload("Client")
 	// 	},
 	// })
-	cdIn.IndexAttrs("ClientName", "DeviceName", "Warehouse", "Quantity", "ByWhom", "Date")
-	cdIn.NewAttrs(cdIn.IndexAttrs()...)
+	cdIn.IndexAttrs("ClientName", "DeviceName", "WarehouseName", "Quantity", "ByWhomName", "Date")
+	cdIn.NewAttrs("ClientName", "DeviceName", "WarehouseID", "Quantity", "ByWhomID", "Date")
 	cdIn.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
 		date := resource.(*db.ClientDeviceIn).Date
 		if date.IsZero() {
@@ -77,8 +111,8 @@ func main() {
 		Permission: noUpdatePermission,
 	})
 
-	cdOut.Meta(&admin.Meta{Name: "ClientDeviceInID", Type: "select_one", Collection: db.CurrentClientDeviceIns})
-	cdOut.Meta(&admin.Meta{Name: "ByWhom", Type: "select_one", Collection: db.EmployeeCollection})
+	cdOut.Meta(&admin.Meta{Name: "ReportItemID", Type: "select_one", Collection: db.CurrentClientDeviceCollection})
+	cdOut.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
 	cdOut.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
 		date := resource.(*db.ClientDeviceOut).Date
 		if date.IsZero() {
@@ -93,8 +127,8 @@ func main() {
 	// 		return db.Preload("Device").Preload("Client")
 	// 	},
 	// })
-	cdOut.IndexAttrs("ClientName", "DeviceName", "Quantity", "WarehouseName", "ByWhom", "Date")
-	cdOut.NewAttrs("ClientDeviceInID", "ByWhom", "Date")
+	cdOut.IndexAttrs("ClientName", "DeviceName", "Quantity", "WarehouseName", "ByWhomName", "Date")
+	cdOut.NewAttrs("ReportItemID", "ByWhomID", "Date")
 
 	deviceOut := adm.AddResource(&db.DeviceOut{}, &admin.Config{
 		Menu:       []string{"日常操作"},
@@ -125,6 +159,41 @@ func main() {
 	deviceIn.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
 	deviceIn.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
 		date := resource.(*db.DeviceIn).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
+
+	deviceCheckOut := adm.AddResource(&db.ClientDeviceCheckOut{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
+	deviceCheckOut.IndexAttrs("FromWarehouseName", "ToDeviceCheckCompanyName", "DeviceName", "ClientName", "Quantity", "ByWhomName", "Date")
+	deviceCheckOut.NewAttrs("FromReportItemID", "Quantity", "ToDeviceCheckCompanyID", "ByWhomID", "Date")
+	deviceCheckOut.Meta(&admin.Meta{Name: "FromReportItemID", Type: "select_one", Collection: db.CurrentClientDeviceCollection})
+	deviceCheckOut.Meta(&admin.Meta{Name: "ToDeviceCheckCompanyID", Type: "select_one", Collection: db.DeviceCheckCompanyCollection})
+	deviceCheckOut.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	deviceCheckOut.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.ClientDeviceCheckOut).Date
+		if date.IsZero() {
+			date = time.Now()
+		}
+		return date
+	}})
+
+	deviceCheckIn := adm.AddResource(&db.ClientDeviceCheckIn{}, &admin.Config{
+		Menu:       []string{"日常操作"},
+		Permission: noUpdatePermission,
+	})
+
+	deviceCheckIn.IndexAttrs("FromDeviceCheckCompanyName", "ToWarehouseName", "DeviceName", "Quantity", "ByWhomName", "Date")
+	deviceCheckIn.NewAttrs("FromReportItemID", "Quantity", "ToWarehouseID", "ByWhomID", "Date")
+	deviceCheckIn.Meta(&admin.Meta{Name: "FromReportItemID", Type: "select_one", Collection: db.CurrentDeviceCheckCollection})
+	deviceCheckIn.Meta(&admin.Meta{Name: "ToWarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
+	deviceCheckIn.Meta(&admin.Meta{Name: "ByWhomID", Type: "select_one", Collection: db.EmployeeCollection})
+	deviceCheckIn.Meta(&admin.Meta{Name: "Date", Valuer: func(resource interface{}, ctx *qor.Context) interface{} {
+		date := resource.(*db.ClientDeviceCheckIn).Date
 		if date.IsZero() {
 			date = time.Now()
 		}
@@ -168,13 +237,13 @@ func main() {
 	device := adm.AddResource(&db.Device{}, &admin.Config{Menu: []string{"数据维护"}})
 	device.Meta(&admin.Meta{Name: "CategoryID", Type: "select_one", Collection: db.DeviceCategories})
 	device.Meta(&admin.Meta{Name: "WarehouseID", Type: "select_one", Collection: db.WarehouseCollection})
-	device.EditAttrs("Name", "Code", "TotalQuantity")
-	device.IndexAttrs("Name", "Code", "TotalQuantity")
-
-	// _ = device
+	device.Meta(&admin.Meta{Name: "Note", Type: "rich_editor"})
+	device.EditAttrs("Name", "Code", "TotalQuantity", "TypeSize", "UnitName", "MakerName", "MakeDate", "FromSource", "Note")
+	device.NewAttrs("Name", "Code", "CategoryID", "TotalQuantity", "WarehouseID", "TypeSize", "UnitName", "MakerName", "MakeDate", "FromSource", "Note")
+	device.IndexAttrs("Name", "Code", "CategoryName", "TypeSize", "MakerName", "TotalQuantity")
 
 	employee := adm.AddResource(&db.Employee{}, &admin.Config{Menu: []string{"数据维护"}})
-	employee.IndexAttrs("Name", "Mobile")
+	employee.IndexAttrs("Name", "Title", "Mobile")
 
 	warehouse := adm.AddResource(&db.Warehouse{}, &admin.Config{Menu: []string{"数据维护"}})
 	warehouse.Meta(&admin.Meta{Name: "Name", Type: "string"})
@@ -182,6 +251,13 @@ func main() {
 	warehouse.EditAttrs("Name", "Address")
 	warehouse.NewAttrs(warehouse.EditAttrs()...)
 	warehouse.IndexAttrs("Name", "Address")
+
+	deviceCheckCompany := adm.AddResource(&db.DeviceCheckCompany{}, &admin.Config{Menu: []string{"数据维护"}})
+	deviceCheckCompany.Meta(&admin.Meta{Name: "Name", Type: "string"})
+	deviceCheckCompany.Meta(&admin.Meta{Name: "Address", Type: "string"})
+	deviceCheckCompany.EditAttrs("Name", "Address")
+	deviceCheckCompany.NewAttrs(warehouse.EditAttrs()...)
+	deviceCheckCompany.IndexAttrs("Name", "Address")
 
 	I18nBackend := database.New(&db.DB)
 	// config.I18n = i18n.New(I18nBackend)

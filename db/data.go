@@ -24,7 +24,7 @@ func WarehouseCollection(prop interface{}, c *qor.Context) (r [][]string) {
 
 func DeviceCheckCompanyCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*DeviceCheckCompany{}
-	if err := DB.Find(&whs).Error; err != nil {
+	if err := DB.Order("name ASC").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
@@ -35,7 +35,7 @@ func DeviceCheckCompanyCollection(prop interface{}, c *qor.Context) (r [][]strin
 
 func CurrentWarehouseDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
-	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND device_category_id = 1 AND client_device_in_id = 0").Find(&whs).Error; err != nil {
+	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND device_category_id = 1 AND client_device_in_id = 0").Order("device_name ASC").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
@@ -46,7 +46,7 @@ func CurrentWarehouseDeviceCollection(prop interface{}, c *qor.Context) (r [][]s
 
 func CurrentDeviceCheckCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
-	if err := DB.Where("count > 0 AND who_has_them_type = 'DeviceCheckCompany'").Find(&whs).Error; err != nil {
+	if err := DB.Where("count > 0 AND who_has_them_type = 'DeviceCheckCompany'").Order("client_name ASC, device_name ASC").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
@@ -57,7 +57,7 @@ func CurrentDeviceCheckCollection(prop interface{}, c *qor.Context) (r [][]strin
 
 func CurrentClientDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
-	if err := DB.Where("count > 0 AND client_device_in_id > 0 AND who_has_them_type = 'Warehouse'").Find(&whs).Error; err != nil {
+	if err := DB.Where("count > 0 AND client_device_in_id > 0 AND who_has_them_type = 'Warehouse'").Order("client_name ASC, device_name").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
@@ -68,7 +68,7 @@ func CurrentClientDeviceCollection(prop interface{}, c *qor.Context) (r [][]stri
 
 func CurrentEmployeeDeviceCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
-	if err := DB.Where("count > 0 AND who_has_them_type = 'Employee' AND client_device_in_id = 0").Find(&whs).Error; err != nil {
+	if err := DB.Where("count > 0 AND who_has_them_type = 'Employee' AND client_device_in_id = 0").Order("device_name ASC").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
@@ -79,7 +79,7 @@ func CurrentEmployeeDeviceCollection(prop interface{}, c *qor.Context) (r [][]st
 
 func CurrentConsumableCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var whs = []*ReportItem{}
-	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND device_category_id = 2 AND client_device_in_id = 0").Find(&whs).Error; err != nil {
+	if err := DB.Where("count > 0 AND who_has_them_type = 'Warehouse' AND device_category_id = 2 AND client_device_in_id = 0").Order("device_name ASC").Find(&whs).Error; err != nil {
 		panic(err)
 	}
 	for _, wh := range whs {
@@ -97,7 +97,7 @@ func CurrentConsumableCollection(prop interface{}, c *qor.Context) (r [][]string
 
 func EmployeeCollection(prop interface{}, c *qor.Context) (r [][]string) {
 	var employees = []*Employee{}
-	if err := DB.Find(&employees).Error; err != nil {
+	if err := DB.Order("name ASC").Find(&employees).Error; err != nil {
 		panic(err)
 	}
 	for _, e := range employees {

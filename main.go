@@ -40,7 +40,7 @@ func main() {
 	reportItem.Scope(&admin.Scope{
 		Name:  "employee-take-outs",
 		Label: "Employee Take Outs",
-		Group: "State",
+		Group: "设备状态",
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Where("who_has_them_type = ?", "Employee")
 		},
@@ -48,7 +48,7 @@ func main() {
 	reportItem.Scope(&admin.Scope{
 		Name:  "to-check-company",
 		Label: "To Check Company",
-		Group: "State",
+		Group: "设备状态",
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Where("who_has_them_type = ?", "DeviceCheckCompany")
 		},
@@ -56,7 +56,7 @@ func main() {
 	reportItem.Scope(&admin.Scope{
 		Name:  "in-warehouse",
 		Label: "In Warehouse",
-		Group: "State",
+		Group: "设备状态",
 		Handle: func(db *gorm.DB, ctx *qor.Context) *gorm.DB {
 			return db.Where("who_has_them_type = ?", "Warehouse")
 		},

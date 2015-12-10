@@ -249,14 +249,14 @@ func main() {
 	warehouse.Meta(&admin.Meta{Name: "Name", Type: "string"})
 	warehouse.Meta(&admin.Meta{Name: "Address", Type: "string"})
 	warehouse.EditAttrs("Name", "Address")
-	warehouse.NewAttrs(warehouse.EditAttrs()...)
+	warehouse.NewAttrs(warehouse.EditAttrs())
 	warehouse.IndexAttrs("Name", "Address")
 
 	deviceCheckCompany := adm.AddResource(&db.DeviceCheckCompany{}, &admin.Config{Menu: []string{"数据维护"}})
 	deviceCheckCompany.Meta(&admin.Meta{Name: "Name", Type: "string"})
 	deviceCheckCompany.Meta(&admin.Meta{Name: "Address", Type: "string"})
 	deviceCheckCompany.EditAttrs("Name", "Address")
-	deviceCheckCompany.NewAttrs(warehouse.EditAttrs()...)
+	deviceCheckCompany.NewAttrs(warehouse.EditAttrs())
 	deviceCheckCompany.IndexAttrs("Name", "Address")
 
 	I18nBackend := database.New(&db.DB)
